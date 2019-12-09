@@ -19,7 +19,7 @@
        server: SERVER_PATH,
      },
      output: {
-       path: path.join(__dirname, 'dist'),
+       path: path.join(__dirname, (argv.mode === 'production') ? 'dist' : 'dist_dev'),
        publicPath: '/',
        filename: '[name].js'
      },

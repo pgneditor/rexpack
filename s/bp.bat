@@ -1,4 +1,5 @@
 rem Build Production
 
 call npm run buildProd
-copy dist\*.*
+pause
+call s\sp

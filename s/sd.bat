@@ -1,0 +1,1 @@
+node .\dist_dev\server.js
