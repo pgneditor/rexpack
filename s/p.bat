@@ -1,4 +1,4 @@
-call s\c %*
+call s\c %1
 
 pause
 git push github master
