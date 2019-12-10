@@ -1,4 +1,5 @@
 import React from 'react'
+import { st } from './Style.js'
 
 /*const Message = () => {
   return (
@@ -24,8 +25,10 @@ class Message extends React.Component {
 
   render(){
     return(
-      <div>
-        {this.state.cnt}
+      <div style={st().por().w(240).h(240).bc("#afa")}>
+        <div style={st().disp("flex").ai("center").jc("space-around").poa().t(Math.random()*200).l(Math.random()*200).w(40).h(40).bc("#ffa")}>
+          {this.state.cnt}
+        </div>
       </div>
     )
   }
