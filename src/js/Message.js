@@ -1,6 +1,7 @@
 import React from 'react'
 import { st } from './Style.js'
 import Canvas from './Canvas.js'
+import BasicBoard from './BasicBoard'
 
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 import 'react-tabs/style/react-tabs.css'
@@ -29,22 +30,19 @@ class Message extends React.Component {
   }
  
   componentDidMount(){
-    console.log(this.element.props.children[1]._owner.stateNode.state.pre = "pre")
-    const ctx = this.refs.canvas.ctx
-    ctx.fillStyle = "#0f0"
-    ctx.fillRect(0,0,150,150)
+    //console.log(this.element.props.children[1]._owner.stateNode.state.pre = "pre")    
   }
 
   render(){
     this.element = (<Tabs>
       <TabList>
-        <Tab>Canvas</Tab>
+        <Tab>BasicBoard</Tab>
         <Tab>Green</Tab>
         <Tab>Purple</Tab>
       </TabList>
 
       <TabPanel>
-        <Canvas ref="canvas"></Canvas>
+        <BasicBoard ref="basicboard"></BasicBoard>
       </TabPanel>
 
       <TabPanel>
