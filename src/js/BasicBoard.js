@@ -1,6 +1,9 @@
 import React from 'react'
+
 import { st } from './Style.js'
 import Canvas from './Canvas.js'
+import { Square } from './Chess.js'
+import { Vect } from './Utils.js'
 
 class BasicBoard extends React.Component {
     constructor(props){
@@ -12,25 +15,39 @@ class BasicBoard extends React.Component {
         this.state = this.state || {}
         this.state.squaresize = props.squaresize || this.state.squaresize || 40
         this.state.numsquares = props.numsquares || this.state.numsquares || 8
+        this.state.squareop = props.squareop || this.state.squareop || 0.3
     }
 
     boardsize(){
         return this.state.squaresize * this.state.numsquares
     }
 
-    squarelight(file, rank){
-        return ( ( file + rank ) % 2 ) == 0
+    squarelight(sq){
+        return ( ( sq.file + sq.rank ) % 2 ) == 0
+    }
+
+    allsquares(){
+        let allsqs = []
+        for(let file=0;file<this.state.numsquares;file++)
+        for(let rank=0;rank<this.state.numsquares;rank++){
+            allsqs.push(Square(file, rank))
+        }
+        return allsqs
+    }
+
+    squarecoords(sq){
+        return Vect(sq.file, sq.rank).s(this.state.squaresize)
     }
 
     drawsquares(){
-        this.squarectx = this.refs.squarecanvas.ctx
-        console.log(this.boardsize())
-        for(let file=0;file<this.state.numsquares;file++)
-        for(let rank=0;rank<this.state.numsquares;rank++){            
-            this.squarectx.fillStyle = this.squarelight(file, rank) ? "#ddd" : "#bbb"
-            this.squarectx.fillRect(file*this.state.squaresize, rank*this.state.squaresize, this.state.squaresize, this.state.squaresize)            
-        }
-        
+        this.squarecanvas = this.refs.squarecanvas
+        this.backgroundcanvas = this.refs.backgroundcanvas
+        this.backgroundcanvas.loadbackgroundimage('/src/img/wood.jpg')
+        for(let sq of this.allsquares()){
+            this.squarecanvas.fillStyle(this.squarelight(sq) ? "#eed" : "#aab")
+            let sqcoords = this.squarecoords(sq)
+            this.squarecanvas.fillRect(sqcoords, Vect(this.state.squaresize, this.state.squaresize))
+        }        
     }
 
     componentDidMount(){        
@@ -40,7 +57,12 @@ class BasicBoard extends React.Component {
     render(){
         return(
             <div style={st().por()}>
-                <Canvas ref="squarecanvas" style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
+                <div style={st().poa()}>
+                    <Canvas ref="backgroundcanvas" style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
+                </div>
+                <div style={st().poa().op(this.state.squareop)}>
+                    <Canvas ref="squarecanvas" style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
+                </div>                
             </div>
         )
     }

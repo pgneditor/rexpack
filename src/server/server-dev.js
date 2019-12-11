@@ -20,7 +20,7 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use(webpackHotMiddleware(compiler))
 
-app.get('*', (req, res, next) => {
+/*app.get('*', (req, res, next) => {
   compiler.outputFileSystem.readFile(HTML_FILE, (err, result) => {
   if (err) {
     return next(err)
@@ -29,13 +29,11 @@ app.get('*', (req, res, next) => {
   res.send(result)
   res.end()
   })
-})
+})*/
 
 const PORT = process.env.PORT || 8080
 
-startServer(app, PORT)
-
-console.log("OK")
+startServer(app, PORT, DIST_DIR, express)
 
 /*
 app.listen(PORT, () => {

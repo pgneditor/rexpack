@@ -2,6 +2,11 @@ export class Style extends Object{
     constructor(){
       super()
     }
+
+    op(op){
+      this.opacity = op
+      return this
+    }
   
     por(){
       this.position = "relative"

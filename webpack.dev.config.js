@@ -1,6 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const HtmlWebPackPlugin = require('html-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
   entry: {
@@ -46,11 +47,11 @@ module.exports = {
       { 
         test: /\.css$/,
         use: [ 'style-loader', 'css-loader' ]
-      },
+      }/*,
       {
        test: /\.(png|svg|jpg|gif)$/,
        use: ['file-loader']
-      }
+      }*/
     ]
   },
   plugins: [
@@ -59,6 +60,9 @@ module.exports = {
       filename: "./index.html",
       excludeChunks: [ 'server' ]
     }),
+    new CopyWebpackPlugin([
+      {from:'./src/img',to:'./src/img'} 
+    ]), 
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoEmitOnErrorsPlugin()
   ]
