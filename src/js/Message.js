@@ -1,5 +1,6 @@
 import React from 'react'
 import { st } from './Style.js'
+import Canvas from './Canvas.js'
 
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 import 'react-tabs/style/react-tabs.css'
@@ -26,17 +27,25 @@ class Message extends React.Component {
       this.setState({cnt: this.state.cnt + 1})
     }, 1000)
   }
-
+ 
   componentDidMount(){
     console.log(this.element.props.children[1]._owner.stateNode.state.pre = "pre")
+    const ctx = this.refs.canvas.ctx
+    ctx.fillStyle = "#0f0"
+    ctx.fillRect(0,0,150,150)
   }
 
   render(){
     this.element = (<Tabs>
       <TabList>
+        <Tab>Canvas</Tab>
         <Tab>Green</Tab>
         <Tab>Purple</Tab>
       </TabList>
+
+      <TabPanel>
+        <Canvas ref="canvas"></Canvas>
+      </TabPanel>
 
       <TabPanel>
         <div style={st().por().w(240).h(240).bc("#afa")}>
