@@ -4,6 +4,10 @@ module.exports = {
     "eslint:recommended",
     "plugin:react/recommended"
   ],
-  "parser": "babel-eslint"
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "node": true
+  },
 };
 

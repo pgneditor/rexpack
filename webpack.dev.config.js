@@ -61,7 +61,8 @@ module.exports = {
       excludeChunks: [ 'server' ]
     }),
     new CopyWebpackPlugin([
-      {from:'./src/img',to:'./src/img'} 
+      {from:'./src/img',to:'./src/img'},
+      {from:'./src/piece',to:'./src/piece'} 
     ]), 
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoEmitOnErrorsPlugin()

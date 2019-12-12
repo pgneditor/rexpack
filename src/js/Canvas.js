@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 import { e } from './Utils.js'
 
@@ -26,16 +27,28 @@ class Img_ extends e{
 }
 export function Img(){return new Img_()}
 
-class Canvas extends React.Component {
+export class Canvas extends React.Component {
+    static get propTypes() { 
+        return { 
+            width: PropTypes.any, 
+            height: PropTypes.any 
+        }
+    }
+
     constructor(props){
         super()
         this.width = props.width || 600
         this.height = props.height || 400
+        this.canvasref = React.createRef()
     }
 
     componentDidMount(){
-        this.canvas = this.refs.canvas
+        this.canvas = this.canvasref.current
         this.ctx = this.canvas.getContext("2d")
+    }
+
+    clear(){
+        this.ctx.clearRect(0, 0, this.width, this.height)
     }
 
     fillRect(orig, size){
@@ -61,9 +74,7 @@ class Canvas extends React.Component {
 
     render(){
         return(
-            <canvas ref="canvas" width={this.width} height={this.height}></canvas>
+            <canvas ref={this.canvasref} width={this.width} height={this.height}></canvas>
         )
     }
 }
-
-export default Canvas

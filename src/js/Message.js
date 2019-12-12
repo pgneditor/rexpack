@@ -1,10 +1,9 @@
 import React from 'react'
-import { st } from './Style.js'
-import Canvas from './Canvas.js'
-import BasicBoard from './BasicBoard'
+import { BasicBoard, STANDARD_START_FEN } from './BasicBoard'
 
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
-import 'react-tabs/style/react-tabs.css'
+//import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
+//import 'react-tabs/style/react-tabs.css'
+import '../piece/alpha.css'
 
 /*const Message = () => {
   return (
@@ -24,49 +23,23 @@ class Message extends React.Component {
       pre: ""
     }
 
+    this.basicboardref = React.createRef()
+
     setInterval(() => {
       this.setState({cnt: this.state.cnt + 1})
     }, 1000)
   }
  
   componentDidMount(){
-    //console.log(this.element.props.children[1]._owner.stateNode.state.pre = "pre")    
+    //console.log(this.element.props.children[1]._owner.stateNode.state.pre = "pre")                
+    this.basicboardref.current.setfromfen(STANDARD_START_FEN)    
   }
 
   render(){
-    this.element = (<Tabs>
-      <TabList>
-        <Tab>BasicBoard</Tab>
-        <Tab>Green</Tab>
-        <Tab>Purple</Tab>
-      </TabList>
-
-      <TabPanel>
-        <BasicBoard ref="basicboard"></BasicBoard>
-      </TabPanel>
-
-      <TabPanel>
-        <div style={st().por().w(240).h(240).bc("#afa")}>
-          <div style={st().disp("flex").ai("center").jc("space-around").poa().t(Math.random()*200).l(Math.random()*200).w(40).h(40).bc("#ffa")}>
-            {this.state.pre}
-            {this.state.cnt}
-          </div>
-        </div>
-      </TabPanel>
-      <TabPanel>
-        <div style={st().por().w(240).h(240).bc("#faf")}>
-          <div style={st().disp("flex").ai("center").jc("space-around").poa().t(Math.random()*200).l(Math.random()*200).w(40).h(40).bc("#ffa")}>
-            {this.state.pre}
-            {this.state.cnt}
-          </div>
-        </div>
-      </TabPanel>
-    </Tabs>)
-    return(
-      <div>
-        {this.element}
-      </div>
-    )
+    this.element = (
+      <BasicBoard ref={this.basicboardref}></BasicBoard>
+    )    
+    return this.element
   }
 }
 
