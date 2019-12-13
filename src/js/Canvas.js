@@ -42,6 +42,13 @@ export class Canvas extends React.Component {
         this.canvasref = React.createRef()
     }
 
+    downloadHref(name, kind){
+        let dt = this.canvas.toDataURL('image/' + kind)
+        dt = dt.replace(/^data:image\/[^;]*/, 'data:application/octet-stream')
+        dt = dt.replace(/^data:application\/octet-stream/, 'data:application/octet-stream;headers=Content-Disposition%3A%20attachment%3B%20filename=' + name + "." + kind)
+        return dt
+    }
+
     componentDidMount(){
         this.canvas = this.canvasref.current
         this.ctx = this.canvas.getContext("2d")

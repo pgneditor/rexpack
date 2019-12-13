@@ -24,6 +24,7 @@ class Message extends React.Component {
     }
 
     this.basicboardref = React.createRef()
+    this.downloadref = React.createRef()
 
     setInterval(() => {
       this.setState({cnt: this.state.cnt + 1})
@@ -35,9 +36,20 @@ class Message extends React.Component {
     this.basicboardref.current.setfromfen(STANDARD_START_FEN)    
   }
 
+  download(){
+    let canvas = this.basicboardref.current.getcanvas()
+    let dt = canvas.toDataURL('image/' + 'png')
+    dt = dt.replace(/^data:image\/[^;]*/, 'data:application/octet-stream')
+    dt = dt.replace(/^data:application\/octet-stream/, 'data:application/octet-stream;headers=Content-Disposition%3A%20attachment%3B%20filename=' + 'board' + "." + 'png')
+    this.downloadref.current.setAttribute("href", dt)
+  }
+
   render(){
     this.element = (
-      <BasicBoard ref={this.basicboardref}></BasicBoard>
+      <div>
+        <BasicBoard ref={this.basicboardref}></BasicBoard>
+        <a ref={this.downloadref} href="#" download="board.png" onClick={this.download.bind(this)}>Download</a>
+      </div>
     )    
     return this.element
   }

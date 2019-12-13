@@ -266,13 +266,27 @@ export class BasicBoard extends React.Component {
         this.drawpieces()
     }
 
+    getcanvas(){
+        let canvas = document.createElement("canvas")
+        canvas.setAttribute("width", this.boardsize())
+        canvas.setAttribute("height", this.boardsize())
+        let ctx = canvas.getContext("2d")
+        ctx.globalAlpha = 1
+        ctx.drawImage(this.getbackgroundcanvas().canvas, 0, 0)
+        ctx.globalAlpha = this.settings.squareop
+        ctx.drawImage(this.getsquarecanvas().canvas, 0, 0)
+        ctx.globalAlpha = 1
+        ctx.drawImage(this.getpiececanvas().canvas, 0, 0)
+        return canvas
+    }
+
     componentDidMount(){                
         this.drawboard()        
     }
 
     render(){                
         return(
-            <div style={st().por()}>
+            <div style={st().por().w(this.boardsize()).h(this.boardsize())}>
                 <div style={st().poa()}>
                     <Canvas ref={this.backgroundcanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>
