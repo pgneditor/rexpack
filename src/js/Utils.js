@@ -372,6 +372,14 @@ class Vect_{
     s(s){
         return new Vect_(this.x * s, this.y * s)
     }
+
+    m(v){
+        return new Vect_(this.x - v.x, this.y - v.y)
+    }
+
+    p(v){
+        return new Vect_(this.x + v.x, this.y + v.y)
+    }
 }
 
 export function Vect(x, y){return new Vect_(x, y)}

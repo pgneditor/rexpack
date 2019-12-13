@@ -130,26 +130,34 @@ export class BasicBoard extends React.Component {
         this.backgroundcanvasref = React.createRef()
         this.squarecanvasref = React.createRef()
         this.piececanvasref = React.createRef()
+        this.dragpiececanvasref = React.createRef()
+        this.piececanvasdivref = React.createRef()
     }
 
     boardarea(){
         return this.settings.numsquares * this.settings.numsquares
     }
 
+    drawpiece(canvas, coords, p){        
+        let klasssel = "." + getclassforpiece(p, this.settings.piecestyle)                                                    
+        let style = getStyle(klasssel)
+        let imgurl = style.match(/url\("(.*?)"/)[1]                
+        let img = Img().width(this.piecesize()).height(this.piecesize())                
+        img.e.src = imgurl                                            
+        setTimeout(()=>canvas.ctx.drawImage(img.e, coords.x, coords.y, this.piecesize(), this.piecesize()),0)                
+    }
+
     drawpieces(){        
         if(!this.rep) return
+        let dragpiececanvas = this.getdragpiececanvas()
+        dragpiececanvas.clear()            
         let piececanvas = this.getpiececanvas()        
         piececanvas.clear()
         for(let sq of this.allsquares()){
             let p = this.pieceatsquare(sq)
-            let pc = this.piececoords(sq)            
             if(p.nonempty()){                
-                let klasssel = "." + getclassforpiece(p, this.settings.piecestyle)                                                    
-                let style = getStyle(klasssel)
-                let imgurl = style.match(/url\("(.*?)"/)[1]                
-                let img = Img().width(this.piecesize()).height(this.piecesize())                
-                img.e.src = imgurl                                            
-                setTimeout(()=>piececanvas.ctx.drawImage(img.e, pc.x, pc.y, this.piecesize(), this.piecesize()),0)                
+                let pc = this.piececoords(sq)                        
+                this.drawpiece(piececanvas, pc, p)
             }
         }
     }
@@ -250,6 +258,10 @@ export class BasicBoard extends React.Component {
         return this.piececanvasref.current
     }
 
+    getdragpiececanvas(){
+        return this.dragpiececanvasref.current
+    }
+
     drawsquares(){
         this.squarecanvas = this.getsquarecanvas()
         this.backgroundcanvas = this.getbackgroundcanvas()
@@ -270,7 +282,7 @@ export class BasicBoard extends React.Component {
         let canvas = document.createElement("canvas")
         canvas.setAttribute("width", this.boardsize())
         canvas.setAttribute("height", this.boardsize())
-        let ctx = canvas.getContext("2d")
+        let ctx = canvas.getContext("2d")        
         ctx.globalAlpha = 1
         ctx.drawImage(this.getbackgroundcanvas().canvas, 0, 0)
         ctx.globalAlpha = this.settings.squareop
@@ -284,6 +296,56 @@ export class BasicBoard extends React.Component {
         this.drawboard()        
     }
 
+    clearpiece(sq){
+        let piececanvas = this.getpiececanvas()
+        piececanvas.clearRect(this.piececoords(sq), Vect(this.piecesize(), this.piecesize()))        
+    }
+
+    piecedragstart(ev){
+        ev.preventDefault()        
+        let bcr = this.piececanvasdivref.current.getBoundingClientRect()
+        this.piecedragorig = Vect(ev.clientX - bcr.x, ev.clientY - bcr.y)        
+        this.draggedsq = this.coordstosq(this.piecedragorig)
+        this.draggedpiece = this.pieceatsquare(this.draggedsq)
+        if(this.draggedpiece.nonempty()){
+            this.draggedpiececoords = this.piececoords(this.draggedsq)        
+            this.clearpiece(this.draggedsq)
+            this.piecedragon = true
+        }        
+    }
+
+    coordstosq(coords){
+        return Square(Math.floor(coords.x / this.settings.squaresize), Math.floor(coords.y / this.settings.squaresize))
+    }
+
+    piecemousemove(ev){
+        if(this.piecedragon){
+            let bcr = this.piececanvasdivref.current.getBoundingClientRect()
+            this.piecedragvect = Vect(ev.clientX - bcr.x, ev.clientY - bcr.y)
+            this.piecedragdiff = this.piecedragvect.m(this.piecedragorig)
+            this.dragtargetsq = this.coordstosq(this.piecedragvect)            
+            let dragpiececanvas = this.getdragpiececanvas()
+            dragpiececanvas.clear()
+            this.drawpiece(dragpiececanvas, this.draggedpiececoords.p(this.piecedragdiff), this.draggedpiece)
+        }
+    }
+
+    squaretoalgeb(sq){
+        return `${String.fromCharCode(sq.file + 'a'.charCodeAt(0))}${String.fromCharCode(this.settings.numsquares - 1 - sq.rank + '1'.charCodeAt(0))}`
+    }
+
+    piecemouseup(){
+        if(this.piecedragon){
+            let dragpiececanvas = this.getdragpiececanvas()
+            dragpiececanvas.clear()            
+            this.drawpiece(dragpiececanvas, this.piececoords(this.dragtargetsq), this.draggedpiece)
+            let algeb = this.squaretoalgeb(this.draggedsq) + this.squaretoalgeb(this.dragtargetsq)
+            console.log(algeb)      
+            setTimeout(this.drawpieces.bind(this), 1000)      
+        }
+        this.piecedragon = false
+    }
+
     render(){                
         return(
             <div style={st().por().w(this.boardsize()).h(this.boardsize())}>
@@ -293,8 +355,11 @@ export class BasicBoard extends React.Component {
                 <div style={st().poa().op(this.settings.squareop)}>
                     <Canvas ref={this.squarecanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>                
-                <div style={st().poa()}>
+                <div style={st().poa()} ref={this.piececanvasdivref}>
                     <Canvas ref={this.piececanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
+                </div>                
+                <div style={st().poa()} draggable={true} onMouseUp={this.piecemouseup.bind(this)} onMouseMove={this.piecemousemove.bind(this)} onDragStart={this.piecedragstart.bind(this)}>
+                    <Canvas ref={this.dragpiececanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>                
             </div>
         )

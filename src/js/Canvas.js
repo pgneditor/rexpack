@@ -62,6 +62,10 @@ export class Canvas extends React.Component {
         this.ctx.fillRect(orig.x, orig.y, size.x, size.y)
     }
 
+    clearRect(orig, size){
+        this.ctx.clearRect(orig.x, orig.y, size.x, size.y)
+    }
+
     fillStyle(fs){
         this.ctx.fillStyle = fs
     }
