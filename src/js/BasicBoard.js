@@ -352,6 +352,13 @@ export class BasicBoard extends React.Component {
         return `${String.fromCharCode(sq.file + 'a'.charCodeAt(0))}${String.fromCharCode(this.settings.numsquares - 1 - sq.rank + '1'.charCodeAt(0))}`
     }
 
+    loadgame(game){
+        this.game = game
+        let currentnode = game.getcurrentnode()
+        this.setfromfen(currentnode.fen)
+        this.positionchanged()
+    }
+
     setvariant(variant){
         this.variant = variant
         this.game = Game().fromblob({variant: this.variant})
@@ -360,11 +367,12 @@ export class BasicBoard extends React.Component {
             delete workercallbacks[id]    
             let fen = payload.setup.fen
             this.setfromfen(fen)
-            this.game.gamenodes["root"] = GameNode().fromblob(this.game, {
+            let rootnode = GameNode().fromblob(this.game, {
                 id: "root",
                 genalgeb: null,
                 fen: fen
             })
+            this.game.gamenodes["root"] = rootnode
             this.positionchanged()
         }
         worker.postMessage({
@@ -383,8 +391,7 @@ export class BasicBoard extends React.Component {
     }
 
     reset(){
-        this.setvariant(this.variant)
-        this.positionchanged()
+        this.setvariant(this.variant)        
     }
 
     back(){

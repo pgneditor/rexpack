@@ -45,7 +45,7 @@ class Game_{
         let gamenodesserialized = blob.gamenodes || {}
         this.gamenodes = {}
         for(let id in gamenodesserialized){
-            this.gamenodes[id] = GameNode().fromblob(gamenodesserialized[id])
+            this.gamenodes[id] = GameNode().fromblob(this, gamenodesserialized[id])
         }
         this.currentnodeid = blob.currentnodeid || "root"
         return this

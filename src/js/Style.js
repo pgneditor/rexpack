@@ -72,6 +72,11 @@ export class Style extends Object{
       this.cursor = "pointer"
       return this
     }
+
+    pad(pad){
+      this.padding = pad
+      return this
+    }
   }
   
   export function st(){return new Style()}
