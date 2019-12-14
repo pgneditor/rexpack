@@ -53,6 +53,14 @@ class Message extends React.Component {
     this.basicboardref.current.reset()
   }
 
+  back(){
+    this.basicboardref.current.back()
+  }
+
+  forward(){
+    this.basicboardref.current.forward()
+  }
+
   render(){
     this.element = (
       <div>
@@ -60,6 +68,8 @@ class Message extends React.Component {
         <a ref={this.downloadref} href="#" download="board.png" onClick={this.download.bind(this)}>Download</a>
         <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
         <input type="button" value="Reset" onClick={this.reset.bind(this)}></input>
+        <input type="button" value="<" onClick={this.back.bind(this)}></input>
+        <input type="button" value=">" onClick={this.forward.bind(this)}></input>
       </div>
     )    
     return this.element

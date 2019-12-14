@@ -2,7 +2,7 @@ import React from 'react'
 
 import { st } from './Style.js'
 import { Canvas, Img } from './Canvas.js'
-import { Square } from './Chess.js'
+import { Square, Game, GameNode } from './Chess.js'
 import { Vect, getStyle } from './Utils.js'
 
 const worker = new Worker('../src/worker/scalachessjs.js')
@@ -353,10 +353,17 @@ export class BasicBoard extends React.Component {
 
     setvariant(variant){
         this.variant = variant
+        this.game = Game().fromblob({variant: this.variant})
         let id = performance.now()
         workercallbacks[id] = (payload)=>{
             delete workercallbacks[id]    
-            this.setfromfen(payload.setup.fen)
+            let fen = payload.setup.fen
+            this.setfromfen(fen)
+            this.game.gamenodes["root"] = GameNode().fromblob(this.game, {
+                id: "root",
+                genalgeb: null,
+                fen: fen
+            })
         }
         worker.postMessage({
             topic: 'init',                
@@ -369,6 +376,16 @@ export class BasicBoard extends React.Component {
 
     reset(){
         this.setvariant(this.variant)
+    }
+
+    back(){
+        this.game.back()
+        this.setfromfen(this.game.getcurrentnode().fen)
+    }
+
+    forward(){
+        this.game.forward()
+        this.setfromfen(this.game.getcurrentnode().fen)
     }
 
     piecemouseup(){
@@ -386,8 +403,16 @@ export class BasicBoard extends React.Component {
                     if(dests.find((testto)=>(testto == to))){                        
                         let id = performance.now()
                         workercallbacks[id] = (payload)=>{
-                            delete workercallbacks[id]                                  
-                            this.setfromfen(payload.situation.fen)
+                            delete workercallbacks[id]                                        
+                            let fen = payload.situation.fen
+                            let algeb = payload.situation.uci
+                            let san = payload.situation.san
+                            this.setfromfen(fen)
+                            this.game.makemove(GameNode().fromblob(this.game, {
+                                fen: fen,
+                                genalgeb: algeb,
+                                gensan: san
+                            }))                            
                         }
                         worker.postMessage({
                             topic: 'move',                
