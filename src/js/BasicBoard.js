@@ -5,6 +5,10 @@ import { Canvas, Img } from './Canvas.js'
 import { Square } from './Chess.js'
 import { Vect, getStyle } from './Utils.js'
 
+const worker = new Worker('../src/worker/scalachessjs.js')
+const workercallbacks = {}
+worker.addEventListener("message", (e)=>workercallbacks[e.data.payload.path](e.data.payload))
+
 export const STANDARD_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 export const ANTICHESS_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
 export const RACING_KINGS_START_FEN = "8/8/8/8/8/8/krbnNBRK/qrbnNBRQ w - - 0 1"
@@ -132,6 +136,7 @@ export class BasicBoard extends React.Component {
         this.piececanvasref = React.createRef()
         this.dragpiececanvasref = React.createRef()
         this.piececanvasdivref = React.createRef()
+        this.imgcache = {}
     }
 
     boardarea(){
@@ -140,11 +145,20 @@ export class BasicBoard extends React.Component {
 
     drawpiece(canvas, coords, p){        
         let klasssel = "." + getclassforpiece(p, this.settings.piecestyle)                                                    
-        let style = getStyle(klasssel)
-        let imgurl = style.match(/url\("(.*?)"/)[1]                
-        let img = Img().width(this.piecesize()).height(this.piecesize())                
-        img.e.src = imgurl                                            
-        setTimeout(()=>canvas.ctx.drawImage(img.e, coords.x, coords.y, this.piecesize(), this.piecesize()),0)                
+        let img
+        if(this.imgcache[klasssel]){
+            img = this.imgcache[klasssel]
+            canvas.ctx.drawImage(img.e, coords.x, coords.y, this.piecesize(), this.piecesize())
+        }else{
+            let style = getStyle(klasssel)
+            let imgurl = style.match(/url\("(.*?)"/)[1]                
+            let img = Img().width(this.piecesize()).height(this.piecesize())                
+            img.e.src = imgurl                                                        
+            setTimeout(()=>{
+                canvas.ctx.drawImage(img.e, coords.x, coords.y, this.piecesize(), this.piecesize())
+                this.imgcache[klasssel] = img
+            },0)                
+        }   
     }
 
     drawpieces(){        
@@ -339,9 +353,46 @@ export class BasicBoard extends React.Component {
             let dragpiececanvas = this.getdragpiececanvas()
             dragpiececanvas.clear()            
             this.drawpiece(dragpiececanvas, this.piececoords(this.dragtargetsq), this.draggedpiece)
-            let algeb = this.squaretoalgeb(this.draggedsq) + this.squaretoalgeb(this.dragtargetsq)
-            console.log(algeb)      
-            setTimeout(this.drawpieces.bind(this), 1000)      
+            let from = this.squaretoalgeb(this.draggedsq)
+            let to = this.squaretoalgeb(this.dragtargetsq)            
+            let id = performance.now()
+            workercallbacks[id] = (payload)=>{
+                delete workercallbacks[id]                
+                let dests = payload.dests[from]
+                if(dests){                    
+                    if(dests.find((testto)=>(testto == to))){                        
+                        let id = performance.now()
+                        workercallbacks[id] = (payload)=>{
+                            delete workercallbacks[id]                                  
+                            this.setfromfen(payload.situation.fen)
+                        }
+                        worker.postMessage({
+                            topic: 'move',                
+                            payload: {
+                                path: id,
+                                fen: this.fen,
+                                variant: 'atomic',
+                                orig: from,
+                                dest: to
+                            }
+                        })
+                    }else{
+                        console.log("error: invalid to square", to)
+                        setTimeout(this.drawpieces.bind(this), 0)         
+                    }
+                }else{
+                    console.log("error: invalid from square", from)
+                    setTimeout(this.drawpieces.bind(this), 0)         
+                }                
+            }            
+            worker.postMessage({
+                topic: 'dests',                
+                payload: {
+                    path: id,
+                    fen: this.fen,
+                    variant: 'atomic'
+                }
+            })
         }
         this.piecedragon = false
     }

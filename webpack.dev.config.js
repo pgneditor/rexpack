@@ -62,7 +62,8 @@ module.exports = {
     }),
     new CopyWebpackPlugin([
       {from:'./src/img',to:'./src/img'},
-      {from:'./src/piece',to:'./src/piece'} 
+      {from:'./src/piece',to:'./src/piece'},
+      {from:'./src/worker',to:'./src/worker'} 
     ]), 
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoEmitOnErrorsPlugin()
