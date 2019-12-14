@@ -70,14 +70,30 @@ class Game_{
         let currentnode = this.getcurrentnode()
         if(currentnode.parentid){
             this.currentnodeid = currentnode.parentid
+            return true
         }
+        return false
+    }
+
+    tobegin(){
+        if(!this.back()) return false
+        while(this.back());
+        return true
+    }
+
+    toend(){
+        if(!this.forward()) return false
+        while(this.forward());
+        return true
     }
 
     forward(){
         let currentnode = this.getcurrentnode()
         if(currentnode.childids.length > 0){
             this.currentnodeid = currentnode.childids[0]
+            return true
         }
+        return false
     }
 
     serialize(){

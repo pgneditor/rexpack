@@ -139,7 +139,7 @@ export class BasicBoard extends React.Component {
         this.piececanvasref = React.createRef()
         this.dragpiececanvasref = React.createRef()
         this.piececanvasdivref = React.createRef()
-        this.imgcache = {}
+        this.imgcache = {}        
     }
 
     boardarea(){
@@ -226,6 +226,7 @@ export class BasicBoard extends React.Component {
         this.settings.squareop = props.squareop || this.settings.squareop || 0.3
         this.settings.piecestyle = props.piecestyle || this.settings.piecestyle || "alpha"
         this.settings.piecefactor = props.piecefactor || this.settings.piecefactor || 0.85        
+        this.positionchangedcallback = props.positionchanged || null
         if(this.rep) this.drawboard()
     }
 
@@ -364,6 +365,7 @@ export class BasicBoard extends React.Component {
                 genalgeb: null,
                 fen: fen
             })
+            this.positionchanged()
         }
         worker.postMessage({
             topic: 'init',                
@@ -374,18 +376,49 @@ export class BasicBoard extends React.Component {
         })
     }
 
+    positionchanged(){
+        if(this.positionchangedcallback){
+            this.positionchangedcallback(this.game.getcurrentnode())
+        }
+    }
+
     reset(){
         this.setvariant(this.variant)
+        this.positionchanged()
     }
 
     back(){
-        this.game.back()
-        this.setfromfen(this.game.getcurrentnode().fen)
+        if(this.game.back()){
+            this.setfromfen(this.game.getcurrentnode().fen)
+            this.positionchanged()
+        }        
+    }
+
+    tobegin(){
+        if(this.game.tobegin()){
+            this.setfromfen(this.game.getcurrentnode().fen)
+            this.positionchanged()
+        }        
+    }
+
+    toend(){
+        if(this.game.toend()){
+            this.setfromfen(this.game.getcurrentnode().fen)
+            this.positionchanged()
+        }        
     }
 
     forward(){
-        this.game.forward()
-        this.setfromfen(this.game.getcurrentnode().fen)
+        if(this.game.forward()){
+            this.setfromfen(this.game.getcurrentnode().fen)
+            this.positionchanged()
+        }        
+    }
+
+    makemove(gamenode){        
+        this.game.makemove(gamenode)  
+        this.setfromfen(gamenode.fen)
+        this.positionchanged()                          
     }
 
     piecemouseup(){
@@ -406,13 +439,12 @@ export class BasicBoard extends React.Component {
                             delete workercallbacks[id]                                        
                             let fen = payload.situation.fen
                             let algeb = payload.situation.uci
-                            let san = payload.situation.san
-                            this.setfromfen(fen)
-                            this.game.makemove(GameNode().fromblob(this.game, {
+                            let san = payload.situation.san                            
+                            this.makemove(GameNode().fromblob(this.game, {
                                 fen: fen,
                                 genalgeb: algeb,
                                 gensan: san
-                            }))                            
+                            }))    
                         }
                         worker.postMessage({
                             topic: 'move',                
@@ -424,12 +456,10 @@ export class BasicBoard extends React.Component {
                                 dest: to
                             }
                         })
-                    }else{
-                        console.log("error: invalid to square", to)
+                    }else{                        
                         setTimeout(this.drawpieces.bind(this), 0)         
                     }
-                }else{
-                    console.log("error: invalid from square", from)
+                }else{                    
                     setTimeout(this.drawpieces.bind(this), 0)         
                 }                
             }            

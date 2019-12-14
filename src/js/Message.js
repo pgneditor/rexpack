@@ -1,10 +1,11 @@
 import React from 'react'
-import { BasicBoard, STANDARD_START_FEN, VARIANT_KEYS } from './BasicBoard.js'
+import { BasicBoard, VARIANT_KEYS } from './BasicBoard.js'
 import { Combo } from './Widgets.js'
 
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
 import '../piece/alpha.css'
+import { st } from './Style.js';
 
 /*const Message = () => {
   return (
@@ -27,14 +28,12 @@ class Message extends React.Component {
     this.basicboardref = React.createRef()
     this.downloadref = React.createRef()
 
+    this.variantcombo = <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
+    this.basicboard = <BasicBoard ref={this.basicboardref} positionchanged={this.positionchanged.bind(this)}></BasicBoard>
+
     setInterval(() => {
       this.setState({cnt: this.state.cnt + 1})
     }, 1000)
-  }
- 
-  componentDidMount(){
-    //console.log(this.element.props.children[1]._owner.stateNode.state.pre = "pre")                
-    this.basicboardref.current.setfromfen(STANDARD_START_FEN)    
   }
 
   download(){
@@ -46,7 +45,9 @@ class Message extends React.Component {
   }
 
   variantchanged(value){
-    this.basicboardref.current.setvariant(value)
+    let basicboard = this.basicboardref.current
+    basicboard.setvariant(value)
+    this.setState({boardsize: basicboard.boardsize()})
   }
 
   reset(){
@@ -57,19 +58,55 @@ class Message extends React.Component {
     this.basicboardref.current.back()
   }
 
+  tobegin(){
+    this.basicboardref.current.tobegin()
+  }
+
+  toend(){
+    this.basicboardref.current.toend()
+  }
+
   forward(){
     this.basicboardref.current.forward()
   }
 
-  render(){
+  positionchanged(gamenode){        
+    let text = JSON.stringify(gamenode.serialize(), null, 2)    
+    this.setState({
+      gameinfo: text,
+      gamenode: gamenode
+    })
+  }
+
+  makemove(id){
+    let basicboard = this.basicboardref.current
+    basicboard.makemove(basicboard.game.gamenodes[id])
+  }
+
+  render(){    
+    let childids = []
+    if(this.state.gamenode) childids = this.state.gamenode.childids
+    let basicboard = this.basicboardref.current
     this.element = (
-      <div>
-        <BasicBoard ref={this.basicboardref}></BasicBoard>
-        <a ref={this.downloadref} href="#" download="board.png" onClick={this.download.bind(this)}>Download</a>
-        <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
-        <input type="button" value="Reset" onClick={this.reset.bind(this)}></input>
-        <input type="button" value="<" onClick={this.back.bind(this)}></input>
-        <input type="button" value=">" onClick={this.forward.bind(this)}></input>
+      <div style={st().disp("flex")}>
+        <div>
+          {this.basicboard}
+          <a ref={this.downloadref} href="#" download="board.png" onClick={this.download.bind(this)}>Download</a>
+          {this.variantcombo}
+          <input type="button" value="Reset" onClick={this.reset.bind(this)}></input>
+          <input type="button" value="<<" onClick={this.tobegin.bind(this)}></input>
+          <input type="button" value="<" onClick={this.back.bind(this)}></input>
+          <input type="button" value=">" onClick={this.forward.bind(this)}></input>
+          <input type="button" value=">>" onClick={this.toend.bind(this)}></input>
+        </div>
+        <div style={st().w(this.state.boardsize || 400).h(this.state.boardsize || 400).bc("#eee").disp("flex").ai("center").jc("space-around").fd("column")}>
+          <textarea value={this.state.gameinfo} style={st().w(((this.state.boardsize) - 20) || 380).h(((this.state.boardsize/2) - 10) || 190)}></textarea>
+          <div style={st().bc("#ffe").w(((this.state.boardsize) - 20) || 380).h(((this.state.boardsize/2) - 10) || 190)}>
+            {childids.map((id)=>
+              <div key={id} style={st().c("#00f").cp()} onClick={this.makemove.bind(this, id)}>{basicboard.game.gamenodes[id].gensan}</div>
+            )}
+          </div>
+        </div>
       </div>
     )    
     return this.element

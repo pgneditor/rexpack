@@ -57,6 +57,21 @@ export class Style extends Object{
         this.justifyContent = jc
         return this
     }
+
+    fd(fd){
+      this.flexDirection = fd
+      return this
+    }
+
+    c(c){
+      this.color = c
+      return this
+    }
+
+    cp(){
+      this.cursor = "pointer"
+      return this
+    }
   }
   
   export function st(){return new Style()}
