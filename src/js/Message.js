@@ -1,5 +1,6 @@
 import React from 'react'
-import { BasicBoard, STANDARD_START_FEN } from './BasicBoard'
+import { BasicBoard, STANDARD_START_FEN, VARIANT_KEYS } from './BasicBoard.js'
+import { Combo } from './Widgets.js'
 
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
@@ -44,11 +45,21 @@ class Message extends React.Component {
     this.downloadref.current.setAttribute("href", dt)
   }
 
+  variantchanged(value){
+    this.basicboardref.current.setvariant(value)
+  }
+
+  reset(){
+    this.basicboardref.current.reset()
+  }
+
   render(){
     this.element = (
       <div>
         <BasicBoard ref={this.basicboardref}></BasicBoard>
         <a ref={this.downloadref} href="#" download="board.png" onClick={this.download.bind(this)}>Download</a>
+        <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
+        <input type="button" value="Reset" onClick={this.reset.bind(this)}></input>
       </div>
     )    
     return this.element

@@ -7,7 +7,10 @@ import { Vect, getStyle } from './Utils.js'
 
 const worker = new Worker('../src/worker/scalachessjs.js')
 const workercallbacks = {}
-worker.addEventListener("message", (e)=>workercallbacks[e.data.payload.path](e.data.payload))
+worker.addEventListener("message", (e)=>{        
+    let id = e.data.payload.path || e.data.reqid    
+    workercallbacks[id](e.data.payload)
+})
 
 export const STANDARD_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 export const ANTICHESS_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
@@ -346,6 +349,26 @@ export class BasicBoard extends React.Component {
 
     squaretoalgeb(sq){
         return `${String.fromCharCode(sq.file + 'a'.charCodeAt(0))}${String.fromCharCode(this.settings.numsquares - 1 - sq.rank + '1'.charCodeAt(0))}`
+    }
+
+    setvariant(variant){
+        this.variant = variant
+        let id = performance.now()
+        workercallbacks[id] = (payload)=>{
+            delete workercallbacks[id]    
+            this.setfromfen(payload.setup.fen)
+        }
+        worker.postMessage({
+            topic: 'init',                
+            reqid: id,                
+            payload: {                
+                variant: variant
+            }
+        })
+    }
+
+    reset(){
+        this.setvariant(this.variant)
     }
 
     piecemouseup(){
