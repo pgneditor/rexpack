@@ -27,10 +27,14 @@ class App extends React.Component {
     this.downloadref = React.createRef()
     this.selectsaveloadref = React.createRef()
     this.enginelogref = React.createRef()
+    this.threadscomboref = React.createRef()
+    this.multipvcomboref = React.createRef()
 
     this.boardsize = 480
 
-    this.variantcombo = <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
+    this.variantcombo = <Combo id="variantcombo" options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
+    this.threadscombo = <Combo ref={this.threadscomboref} id="threadscombo" options={[[1,1], [2,2], [4,4], [8,8]]}></Combo>
+    this.multipvcombo = <Combo ref={this.multipvcomboref} id="multipvcombo" options={[[1,1], [2,2], [3,3], [4,4], [5,5], [10,10], [15,15], [20,20]]}></Combo>
     this.basicboard = <BasicBoard ref={this.basicboardref} squaresize={this.boardsize/8} positionchanged={this.positionchanged.bind(this)}></BasicBoard>
     this.selectsaveload = <SelectSaveLoad ref={this.selectsaveloadref} savecallback={this.save.bind(this)} loadcallback={this.load.bind(this)}></SelectSaveLoad>
 
@@ -181,6 +185,8 @@ class App extends React.Component {
     let currentnode = this.getcurrentnode()
     let variant = this.getvariant()
     this.issueenginecommand(`setoption name UCI_Variant value ${variant}`)    
+    this.issueenginecommand(`setoption name Threads value ${this.threadscomboref.current.state.selected}`)    
+    this.issueenginecommand(`setoption name MultiPV value ${this.multipvcomboref.current.state.selected}`)    
     this.issueenginecommand(`position fen ${currentnode.fen}`)    
     this.issueenginecommand(`go infinite`)    
   }
@@ -228,6 +234,10 @@ class App extends React.Component {
             <input type="button" value="uci" onClick={this.uci.bind(this)}></input>
             <input type="button" value="go" onClick={this.go.bind(this)}></input>
             <input type="button" value="stop" onClick={this.stop.bind(this)}></input>            
+            <label style={st().fs(10).mar(3)}>Threads</label>
+            {this.threadscombo}
+            <label style={st().fs(10).mar(3)}>MultiPV</label>
+            {this.multipvcombo}
             <label style={st().fs(10).mar(5)}>{this.state.enginealive}</label>
           </div>
           <a ref={this.downloadref} style={st().pad(3)} href="#" download="board.png" onClick={this.download.bind(this)}>Export</a>                     
