@@ -32,4 +32,4 @@ export class Engine{
     }
 }
 
-export const engine = new Engine(process.env.REXPACKDEV ? './dist_dev/src/bin/stockfish' : '/App/dist/src/bin/stockfish')
+export const engine = new Engine(process.env.REXPACKDEV ? './dist_dev/src/bin/stockfish' : '/app/dist/src/bin/stockfish')
