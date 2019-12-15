@@ -405,3 +405,25 @@ export function getelse(obj, key, defaultvalue){
     if(key in obj) return obj[key]
     return defaultvalue
 }
+
+export class LogItem{
+    constructor(text){
+        this.text = text        
+    }
+}
+
+export class Logger{
+    constructor(props){
+        this.items = []
+        this.maxitems = props.maxitems || 50
+    }
+
+    log(item){
+        this.items.unshift(item)
+        while(this.items.length > this.maxitems) this.items.pop()
+    }
+
+    text(){
+        return this.items.map((item)=>item.text).join("\n")
+    }
+}

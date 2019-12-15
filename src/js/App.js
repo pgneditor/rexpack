@@ -2,12 +2,7 @@ import React from 'react'
 import { BasicBoard, VARIANT_KEYS } from './BasicBoard.js'
 import { Combo, SelectSaveLoad } from './Widgets.js'
 import { Game, WEIGHT_OPTIONS } from './Chess.js'
-
-const es = new EventSource('/stream')
- 
-es.onmessage = function (event){
-  console.log(event.data)
-}
+import { LogItem, Logger } from './Utils.js'
 
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
@@ -24,19 +19,46 @@ import { st } from './Style.js';
   )
 }*/
 
-class Message extends React.Component {
+class App extends React.Component {
   constructor(){
     super()
     this.state = {}
     this.basicboardref = React.createRef()
     this.downloadref = React.createRef()
     this.selectsaveloadref = React.createRef()
+    this.enginelogref = React.createRef()
 
     this.boardsize = 480
 
     this.variantcombo = <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
     this.basicboard = <BasicBoard ref={this.basicboardref} squaresize={this.boardsize/8} positionchanged={this.positionchanged.bind(this)}></BasicBoard>
     this.selectsaveload = <SelectSaveLoad ref={this.selectsaveloadref} savecallback={this.save.bind(this)} loadcallback={this.load.bind(this)}></SelectSaveLoad>
+
+    this.es = new EventSource('/stream')
+
+    this.enginelog = new Logger({})
+
+    this.state.enginealive = "no engine detected"
+    
+    this.es.onmessage = (function (event){
+      //console.log(event.data)
+      if(this.enginelogref.current){
+        let text = JSON.parse(event.data)
+
+        if(text == "engine alive"){
+          this.setState({enginealive: "engine ticking"})
+          setTimeout(()=>{
+            this.setState({enginealive: "engine timed out"})
+          }, 10000)
+        }else if(text == "sse init"){
+          this.setState({enginealive: "sse initialized"})
+        }else{
+          this.enginelog.log(new LogItem(text))
+        }      
+
+        this.enginelogref.current.value = this.enginelog.text()
+      }
+    }).bind(this)
   }
 
   load(id){
@@ -118,7 +140,7 @@ class Message extends React.Component {
   }
 
   issueenginecommand(command){
-    console.log("issued engine command", command)
+    //console.log("issueing engine command", command)
     fetch('/enginecommand', {
       method: "POST",
       headers: {
@@ -129,7 +151,7 @@ class Message extends React.Component {
       })
     }).then(
       (response)=>response.text().then(
-        (text)=>console.log("issue engine command responded with :", text),
+        (text)=>{console.log("issue engine command responded with :", text)},
         (err)=>console.log(err)
       ),
       (err)=>console.log(err)
@@ -138,6 +160,30 @@ class Message extends React.Component {
 
   uci(){
     this.issueenginecommand("uci")
+  }
+
+  getgame(){
+    return this.basicboardref.current.game
+  }
+
+  getcurrentnode(){
+    return this.getgame().getcurrentnode()
+  }
+
+  getvariant(){
+    return this.getgame().variant
+  }
+
+  go(){
+    let currentnode = this.getcurrentnode()
+    let variant = this.getvariant()
+    this.issueenginecommand(`setoption name UCI_Variant value ${variant}`)    
+    this.issueenginecommand(`position fen ${currentnode.fen}`)    
+    this.issueenginecommand(`go infinite`)    
+  }
+
+  stop(){        
+    this.issueenginecommand(`stop`)    
   }
 
   render(){            
@@ -175,8 +221,20 @@ class Message extends React.Component {
             {this.variantcombo}
           </div>            
           {this.selectsaveload}
-          <input type="button" value="uci" onClick={this.uci.bind(this)}></input>
+          <div style={st().pad(3).bc("#77f").disp("inline-block")}>              
+            <input type="button" value="uci" onClick={this.uci.bind(this)}></input>
+            <input type="button" value="go" onClick={this.go.bind(this)}></input>
+            <input type="button" value="stop" onClick={this.stop.bind(this)}></input>
+            {this.state.enginealive ?
+              <label>engine detected</label>
+            :
+              <label>no engine</label>
+            }
+          </div>
           <a ref={this.downloadref} style={st().pad(3)} href="#" download="board.png" onClick={this.download.bind(this)}>Export</a>                     
+        </div>
+        <div>
+          <textarea ref={this.enginelogref} style={st().w(800).h(100)}></textarea>
         </div>
       </div>
     )    
@@ -184,4 +242,4 @@ class Message extends React.Component {
   }
 }
 
-export default Message
+export default App

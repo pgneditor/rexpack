@@ -10,6 +10,7 @@ export function startServer(app, PORT, DIST_DIR, express){
 
     app.post('/enginecommand', (req, res) => {                
         let command = req.body.command
+        console.log(`issueing engine comamnd : ${command}`)
         engine.issuecommand(command)
         res.send(`issued engine command ok : ${command}`)
     })
