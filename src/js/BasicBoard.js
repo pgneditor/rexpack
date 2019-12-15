@@ -341,7 +341,7 @@ export class BasicBoard extends React.Component {
         let weightscanvas = this.getweightscanvas()
         weightscanvas.clear()
         try{
-            let childs = this.game.getcurrentnode().sortedchilds()
+            let childs = this.game.getcurrentnode().revsortedchilds()
             for(let child of childs){
                 this.drawmovearrow(weightscanvas, this.movefromalgeb(child.genalgeb), {
                     scalefactor: this.boardsize() / 560,
@@ -421,6 +421,20 @@ export class BasicBoard extends React.Component {
         let currentnode = this.game.getcurrentnode()
         this.setfromfen(currentnode.fen)
         this.positionchanged()
+    }
+
+    reportpgn(callback){
+        let id = performance.now()
+        workercallbacks[id] = (payload)=>{
+            delete workercallbacks[id]    
+            callback(payload)
+        }
+        let pgninfo = this.game.pgninfo()        
+        worker.postMessage({
+            topic: 'pgnDump',                
+            reqid: id,                
+            payload: pgninfo
+        })
     }
 
     setvariant(variant){

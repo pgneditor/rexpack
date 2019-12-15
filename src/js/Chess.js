@@ -43,6 +43,10 @@ class GameNode_{
         return this.childids.sort((a, b) => this.parentgame.gamenodes[b].weights[0] - this.parentgame.gamenodes[a].weights[0]).map((childid)=>this.parentgame.gamenodes[childid])
     }
 
+    revsortedchilds(){
+        return this.sortedchilds().reverse()
+    }
+
     serialize(){
         return{
             id: this.id,
@@ -73,8 +77,31 @@ class Game_{
         return this
     }
 
+    pgninfo(){
+        let rootnode = this.getrootnode()
+        let pgnMoves = []
+        let oldcurrentnodeid = this.currentnodeid
+        this.currentnodeid = "root"
+        while(this.forward()){
+            pgnMoves.push(this.getcurrentnode().gensan)
+        }
+        this.currentnodeid = oldcurrentnodeid
+        return {
+            variant: this.variant,
+            initialFen: rootnode.fen,
+            pgnMoves: pgnMoves,
+            white: "?",
+            black: "?",
+            date: "?"
+        }
+    }
+
     getcurrentnode(){
         return this.gamenodes[this.currentnodeid]
+    }
+
+    getrootnode(){
+        return this.gamenodes["root"]
     }
 
     makemove(gamenode){

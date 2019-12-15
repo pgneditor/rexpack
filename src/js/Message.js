@@ -22,12 +22,11 @@ class Message extends React.Component {
   constructor(){
     super()
     this.state = {}
-
     this.basicboardref = React.createRef()
     this.downloadref = React.createRef()
     this.selectsaveloadref = React.createRef()
 
-    this.boardsize = 400
+    this.boardsize = 480
 
     this.variantcombo = <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
     this.basicboard = <BasicBoard ref={this.basicboardref} squaresize={this.boardsize/8} positionchanged={this.positionchanged.bind(this)}></BasicBoard>
@@ -85,12 +84,16 @@ class Message extends React.Component {
     this.basicboardref.current.forward()
   }
 
-  positionchanged(gamenode){       
-    let text = JSON.stringify(gamenode.serialize(), null, 2)    
-    this.setState({
-      gameinfo: text,
-      gamenode: gamenode
-    })
+  positionchanged(gamenode){           
+    let basicboard = this.basicboardref.current
+    basicboard.reportpgn((payload)=>{
+      let pgn = payload.pgn ? payload.pgn : "No moves."
+      this.setState({
+        gameinfo: pgn,
+        gamenode: gamenode
+      })
+      basicboard.highlightweights()
+    })    
   }
 
   makemove(id){
