@@ -46,14 +46,17 @@ class App extends React.Component {
         let text = JSON.parse(event.data)
 
         if(text == "engine alive"){
-          this.setState({enginealive: "engine ticking"})
-          setTimeout(()=>{
+          this.setState({enginealive: "engine ticking"})          
+          if(this.enginetimeout) window.clearTimeout(this.enginetimeout)
+          this.enginetimeout = setTimeout(()=>{
             this.setState({enginealive: "engine timed out"})
           }, 10000)
         }else if(text == "sse init"){
           this.setState({enginealive: "sse initialized"})
         }else{
-          this.enginelog.log(new LogItem(text))
+          text = text.replace(/\r/g, "")
+          let lines = text.split("\n")
+          for(let line of lines) if(line != "") this.enginelog.log(new LogItem(line))
         }      
 
         this.enginelogref.current.value = this.enginelog.text()
@@ -221,15 +224,11 @@ class App extends React.Component {
             {this.variantcombo}
           </div>            
           {this.selectsaveload}
-          <div style={st().pad(3).bc("#77f").disp("inline-block")}>              
+          <div style={st().pad(3).bc("#aaf").disp("inline-block")}>              
             <input type="button" value="uci" onClick={this.uci.bind(this)}></input>
             <input type="button" value="go" onClick={this.go.bind(this)}></input>
-            <input type="button" value="stop" onClick={this.stop.bind(this)}></input>
-            {this.state.enginealive ?
-              <label>engine detected</label>
-            :
-              <label>no engine</label>
-            }
+            <input type="button" value="stop" onClick={this.stop.bind(this)}></input>            
+            <label style={st().fs(10).mar(5)}>{this.state.enginealive}</label>
           </div>
           <a ref={this.downloadref} style={st().pad(3)} href="#" download="board.png" onClick={this.download.bind(this)}>Export</a>                     
         </div>

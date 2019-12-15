@@ -408,7 +408,7 @@ export function getelse(obj, key, defaultvalue){
 
 export class LogItem{
     constructor(text){
-        this.text = text        
+        this.text = text
     }
 }
 
