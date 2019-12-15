@@ -77,6 +77,16 @@ export class Style extends Object{
       this.padding = pad
       return this
     }
+
+    mar(mar){
+      this.margin = mar
+      return this
+    }
+
+    fs(fs){
+      this.fontSize = fs + "px"
+      return this
+    }
   }
   
   export function st(){return new Style()}

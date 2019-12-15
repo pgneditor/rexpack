@@ -1,7 +1,7 @@
 import React from 'react'
 import { BasicBoard, VARIANT_KEYS } from './BasicBoard.js'
 import { Combo, SelectSaveLoad } from './Widgets.js'
-import { Game } from './Chess.js'
+import { Game, WEIGHT_OPTIONS } from './Chess.js'
 
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
@@ -27,7 +27,7 @@ class Message extends React.Component {
     this.downloadref = React.createRef()
     this.selectsaveloadref = React.createRef()
 
-    this.boardsize = 480
+    this.boardsize = 400
 
     this.variantcombo = <Combo options={VARIANT_KEYS} changecallback={this.variantchanged.bind(this)}></Combo>
     this.basicboard = <BasicBoard ref={this.basicboardref} squaresize={this.boardsize/8} positionchanged={this.positionchanged.bind(this)}></BasicBoard>
@@ -98,10 +98,15 @@ class Message extends React.Component {
     basicboard.makemove(basicboard.game.gamenodes[id])
   }
 
-  render(){            
-    let childids = []
-    if(this.state.gamenode) childids = this.state.gamenode.childids
+  weightchanged(id, i, w){
     let basicboard = this.basicboardref.current
+    basicboard.game.gamenodes[id].weights[i] = w
+    basicboard.positionchanged()
+  }
+
+  render(){            
+    let sortedchilds = []
+    if(this.state.gamenode) sortedchilds = this.state.gamenode.sortedchilds()    
     let boardsize = this.boardsize
     this.element = (
       <div>
@@ -110,8 +115,15 @@ class Message extends React.Component {
           <div style={st().w(boardsize).h(boardsize).bc("#eee").disp("flex").ai("center").jc("space-around").fd("column")}>
             <textarea value={this.state.gameinfo} style={st().w(boardsize - 20).h(boardsize/2 - 10)}></textarea>
             <div style={st().bc("#ffe").w(boardsize - 20).h(boardsize/2 - 10)}>
-              {childids.map((id)=>
-                <div key={id} style={st().c("#00f").cp()} onClick={this.makemove.bind(this, id)}>{basicboard.game.gamenodes[id].gensan}</div>
+              {sortedchilds.map((child)=>
+                <div key={child.id} style={st().disp("flex").ai("center")}>
+                  <div style={st().fs(18).c("#00f").cp().w(100)} onClick={this.makemove.bind(this, child.id)}>{child.gensan}</div>
+                  {[0,1].map((i)=>
+                    <div key={i} style={st().mar(2).disp("inline-block")}>
+                      <Combo options={WEIGHT_OPTIONS} selected={`${child.weights[i]}`} changecallback={this.weightchanged.bind(this, child.id, i)}></Combo>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

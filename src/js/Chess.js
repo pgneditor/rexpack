@@ -1,3 +1,5 @@
+export const WEIGHT_OPTIONS = [[0,0], [1,1], [2,2], [3,3], [4,4], [5,5], [6,6], [7,7], [8,8], [9,9], [10,10]]
+
 class Square_{
     constructor(file, rank){
         this.file = file
@@ -19,7 +21,12 @@ class GameNode_{
         this.fen = blob.fen
         this.childids = blob.childids || []
         this.parentid = blob.parentid || null
+        this.weights = blob.weights || [0, 0]
         return this
+    }
+
+    sortedchilds(){
+        return this.childids.sort((a, b) => this.parentgame.gamenodes[b].weights[0] - this.parentgame.gamenodes[a].weights[0]).map((childid)=>this.parentgame.gamenodes[childid])
     }
 
     serialize(){
@@ -29,7 +36,8 @@ class GameNode_{
             gensan: this.gensan,
             fen: this.fen,
             childids: this.childids,
-            parentid: this.parentid
+            parentid: this.parentid,
+            weights: this.weights
         }
     }
 }

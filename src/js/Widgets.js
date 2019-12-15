@@ -8,7 +8,7 @@ export class Combo extends React.Component {
         return { 
             id: PropTypes.string,
             options: PropTypes.array,
-            selected: PropTypes.bool,
+            selected: PropTypes.string,
             changecallback: PropTypes.func
         }
     }
