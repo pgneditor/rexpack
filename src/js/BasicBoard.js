@@ -500,6 +500,13 @@ export class BasicBoard extends React.Component {
         }        
     }
 
+    del(){
+        if(this.game.del()){
+            this.setfromfen(this.game.getcurrentnode().fen)
+            this.positionchanged()
+        }        
+    }
+
     makemove(gamenode){        
         this.game.makemove(gamenode)  
         this.setfromfen(gamenode.fen)

@@ -84,6 +84,10 @@ class Message extends React.Component {
     this.basicboardref.current.forward()
   }
 
+  del(){
+    this.basicboardref.current.del()
+  }
+
   positionchanged(gamenode){           
     let basicboard = this.basicboardref.current
     basicboard.reportpgn((payload)=>{
@@ -138,6 +142,7 @@ class Message extends React.Component {
             <input type="button" value="<" onClick={this.back.bind(this)}></input>
             <input type="button" value=">" onClick={this.forward.bind(this)}></input>
             <input type="button" value=">>" onClick={this.toend.bind(this)}></input>
+            <input type="button" value="X" style={st().bc("#fee")} onClick={this.del.bind(this)}></input>
             {this.variantcombo}
           </div>            
           {this.selectsaveload}

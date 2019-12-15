@@ -77,13 +77,21 @@ class Game_{
         return this
     }
 
-    pgninfo(){
+    pgninfo(fromroot){
         let rootnode = this.getrootnode()
         let pgnMoves = []
         let oldcurrentnodeid = this.currentnodeid
-        this.currentnodeid = "root"
-        while(this.forward()){
-            pgnMoves.push(this.getcurrentnode().gensan)
+        if(fromroot){            
+            this.currentnodeid = "root"
+            while(this.forward()){
+                pgnMoves.push(this.getcurrentnode().gensan)
+            }            
+        }else{
+            let currentnode = this.getcurrentnode()
+            while(this.back()){
+                pgnMoves.unshift(currentnode.gensan)
+                currentnode = this.getcurrentnode()
+            }
         }
         this.currentnodeid = oldcurrentnodeid
         return {
@@ -119,6 +127,17 @@ class Game_{
         let currentnode = this.getcurrentnode()
         if(currentnode.parentid){
             this.currentnodeid = currentnode.parentid
+            return true
+        }
+        return false
+    }
+
+    del(){
+        let oldcurrentnode = this.getcurrentnode()
+        if(oldcurrentnode.parentid){
+            this.currentnodeid = oldcurrentnode.parentid
+            let currentnode = this.getcurrentnode()            
+            currentnode.childids = currentnode.childids.filter((childid)=>childid != oldcurrentnode.id)            
             return true
         }
         return false
