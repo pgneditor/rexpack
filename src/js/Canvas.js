@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import { e } from './Utils.js'
+import { e, getelse } from './Utils.js'
 
 class Img_ extends e{
     constructor(){
@@ -40,6 +40,42 @@ export class Canvas extends React.Component {
         this.width = props.width || 600
         this.height = props.height || 400
         this.canvasref = React.createRef()
+    }
+
+    arrow(from, to, argsopt){        
+        let diff = to.m(from)
+        let l = diff.l()
+        let rot = Math.asin((to.y - from.y)/l)        
+        if(to.x < from.x) rot = Math.PI - rot             
+        let args = argsopt || {}        
+        let scalefactor = getelse(args, "scalefactor", 1)
+        let auxscalefactor = getelse(args, "auxscalefactor", 1)
+        let linewidth = getelse(args, "linewidth", 16) * scalefactor * auxscalefactor
+        let halflinewidth = linewidth / 2
+        let pointheight = getelse(args, "pointheight", 40) * scalefactor * auxscalefactor
+        let pointwidth = getelse(args, "pointwidth", 30) * scalefactor * auxscalefactor
+        let halfpointwidth = pointwidth / 2
+        let color = getelse(args, "color", "#ff0")        
+        let opacity = getelse(args, "opacity", 1)        
+        let lineheight = l - pointheight
+        this.ctx.save()
+        this.ctx.globalAlpha = opacity
+        this.ctx.translate(from.x, from.y)
+        this.ctx.rotate(rot)
+        this.ctx.fillStyle = color
+        this.ctx.beginPath()
+        this.ctx.moveTo(0, 0)
+        this.ctx.lineTo(0, halflinewidth)        
+        this.ctx.lineTo(lineheight, halflinewidth)
+        this.ctx.lineTo(lineheight, halflinewidth + halfpointwidth)
+        this.ctx.lineTo(l, 0)
+        this.ctx.lineTo(lineheight, - ( halflinewidth + halfpointwidth ) )
+        this.ctx.lineTo(lineheight, - halflinewidth)
+        this.ctx.lineTo(0, -halflinewidth)        
+        this.ctx.lineTo(0, 0)        
+        this.ctx.closePath()
+        this.ctx.fill()
+        this.ctx.restore()
     }
 
     downloadHref(name, kind){

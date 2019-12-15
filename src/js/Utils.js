@@ -380,6 +380,10 @@ class Vect_{
     p(v){
         return new Vect_(this.x + v.x, this.y + v.y)
     }
+
+    l(){
+        return Math.sqrt(this.x * this.x + this.y * this.y)
+    }
 }
 
 export function Vect(x, y){return new Vect_(x, y)}
@@ -395,4 +399,9 @@ export function getStyle(className) {
         }
     }    
     return cssText
+}
+
+export function getelse(obj, key, defaultvalue){
+    if(key in obj) return obj[key]
+    return defaultvalue
 }

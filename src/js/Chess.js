@@ -9,6 +9,20 @@ class Square_{
 
 export function Square(file, rank){return new Square_(file, rank)}
 
+class Move_{
+    constructor(fromsq, tosq, prompiece){
+        this.fromsq = fromsq
+        this.tosq = tosq
+        this.prompiece = prompiece
+    }
+
+    get isnull(){
+        return this.tosq.equals(this.fromsq)
+    }
+}
+
+export function Move(fromsq, tosq, prompiece){return new Move_(fromsq, tosq, prompiece)}
+
 class GameNode_{
     constructor(){        
     }

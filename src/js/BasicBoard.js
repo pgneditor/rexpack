@@ -2,7 +2,7 @@ import React from 'react'
 
 import { st } from './Style.js'
 import { Canvas, Img } from './Canvas.js'
-import { Square, Game, GameNode } from './Chess.js'
+import { Square, Move, Game, GameNode } from './Chess.js'
 import { Vect, getStyle } from './Utils.js'
 
 const worker = new Worker('../src/worker/scalachessjs.js')
@@ -136,6 +136,7 @@ export class BasicBoard extends React.Component {
         this.setprops(props)
         this.backgroundcanvasref = React.createRef()
         this.squarecanvasref = React.createRef()
+        this.highlightcanvasref = React.createRef()
         this.piececanvasref = React.createRef()
         this.dragpiececanvasref = React.createRef()
         this.piececanvasdivref = React.createRef()
@@ -251,6 +252,29 @@ export class BasicBoard extends React.Component {
         return Vect(sq.file, sq.rank).s(this.settings.squaresize)
     }
 
+    squaremiddlecoords(sq){
+        return Vect(sq.file, sq.rank).s(this.settings.squaresize).p(Vect(this.settings.squaresize/2, this.settings.squaresize/2))
+    }
+
+    squarefromalgeb(algeb){        
+        let file = algeb.charCodeAt(0) - "a".charCodeAt(0)
+        let rank = this.settings.numsquares - 1 - ( algeb.charCodeAt(1) - "1".charCodeAt(0) )
+        return Square(file, rank)
+    }
+
+    movefromalgeb(algeb){
+        if(algeb.includes("@")){
+            let sq = this.squarefromalgeb(algeb.slice(2,4))
+            let p = new Piece(algeb.slice(0,1).toLowerCase(), this.turnfen == "w" ? 1 : 0)
+            return new Move(sq, sq, p)    
+        }
+        return new Move(this.squarefromalgeb(algeb.slice(0,2)), this.squarefromalgeb(algeb.slice(2,4)))
+    }
+
+    drawmovearrow(canvas, move, argsopt){
+        canvas.arrow(this.squaremiddlecoords(move.fromsq), this.squaremiddlecoords(move.tosq), argsopt)
+    }
+
     piececoords(sq){
         let sc = this.squarecoords(sq)
         return new Vect(sc.x + this.piecemargin(), sc.y + this.piecemargin())
@@ -266,6 +290,10 @@ export class BasicBoard extends React.Component {
 
     getsquarecanvas(){
         return this.squarecanvasref.current
+    }
+
+    gethighlightcanvas(){
+        return this.highlightcanvasref.current
     }
 
     getbackgroundcanvas(){
@@ -291,8 +319,22 @@ export class BasicBoard extends React.Component {
         }        
     }
 
+    highlightlastmove(){
+        let highlightcanvas = this.gethighlightcanvas()
+        highlightcanvas.clear()
+        try{
+            let genalgeb = this.game.getcurrentnode().genalgeb
+            if(genalgeb){
+                this.drawmovearrow(highlightcanvas, this.movefromalgeb(genalgeb), {
+                    scalefactor: this.boardsize() / 560
+                })
+            }
+        }catch(err){this.lasterr = err}
+    }
+
     drawboard(){        
-        this.drawsquares()
+        this.drawsquares()        
+        this.highlightlastmove()
         this.drawpieces()
     }
 
@@ -306,6 +348,7 @@ export class BasicBoard extends React.Component {
         ctx.globalAlpha = this.settings.squareop
         ctx.drawImage(this.getsquarecanvas().canvas, 0, 0)
         ctx.globalAlpha = 1
+        ctx.drawImage(this.gethighlightcanvas().canvas, 0, 0)
         ctx.drawImage(this.getpiececanvas().canvas, 0, 0)
         return canvas
     }
@@ -354,7 +397,7 @@ export class BasicBoard extends React.Component {
 
     loadgame(game){
         this.game = game
-        let currentnode = game.getcurrentnode()
+        let currentnode = this.game.getcurrentnode()
         this.setfromfen(currentnode.fen)
         this.positionchanged()
     }
@@ -379,7 +422,7 @@ export class BasicBoard extends React.Component {
             topic: 'init',                
             reqid: id,                
             payload: {                
-                variant: variant
+                variant: this.variant
             }
         })
     }
@@ -458,7 +501,7 @@ export class BasicBoard extends React.Component {
                             payload: {
                                 path: id,
                                 fen: this.fen,
-                                variant: 'atomic',
+                                variant: this.variant,
                                 orig: from,
                                 dest: to
                             }
@@ -475,7 +518,7 @@ export class BasicBoard extends React.Component {
                 payload: {
                     path: id,
                     fen: this.fen,
-                    variant: 'atomic'
+                    variant: this.variant
                 }
             })
         }
@@ -490,6 +533,9 @@ export class BasicBoard extends React.Component {
                 </div>
                 <div style={st().poa().op(this.settings.squareop)}>
                     <Canvas ref={this.squarecanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
+                </div>                
+                <div style={st().poa()}>
+                    <Canvas ref={this.highlightcanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>                
                 <div style={st().poa()} ref={this.piececanvasdivref}>
                     <Canvas ref={this.piececanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
