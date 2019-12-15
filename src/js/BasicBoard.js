@@ -137,6 +137,7 @@ export class BasicBoard extends React.Component {
         this.backgroundcanvasref = React.createRef()
         this.squarecanvasref = React.createRef()
         this.highlightcanvasref = React.createRef()
+        this.weightscanvasref = React.createRef()
         this.piececanvasref = React.createRef()
         this.dragpiececanvasref = React.createRef()
         this.piececanvasdivref = React.createRef()
@@ -296,6 +297,10 @@ export class BasicBoard extends React.Component {
         return this.highlightcanvasref.current
     }
 
+    getweightscanvas(){
+        return this.weightscanvasref.current
+    }
+
     getbackgroundcanvas(){
         return this.backgroundcanvasref.current
     }
@@ -332,9 +337,25 @@ export class BasicBoard extends React.Component {
         }catch(err){this.lasterr = err}
     }
 
+    highlightweights(){
+        let weightscanvas = this.getweightscanvas()
+        weightscanvas.clear()
+        try{
+            let childs = this.game.getcurrentnode().sortedchilds()
+            for(let child of childs){
+                this.drawmovearrow(weightscanvas, this.movefromalgeb(child.genalgeb), {
+                    scalefactor: this.boardsize() / 560,
+                    color: "#00f",
+                    opacity: child.weights[0] / 10
+                })
+            }
+        }catch(err){this.lasterr = err}
+    }
+
     drawboard(){        
         this.drawsquares()        
         this.highlightlastmove()
+        this.highlightweights()
         this.drawpieces()
     }
 
@@ -536,6 +557,9 @@ export class BasicBoard extends React.Component {
                 </div>                
                 <div style={st().poa()}>
                     <Canvas ref={this.highlightcanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
+                </div>                
+                <div style={st().poa()}>
+                    <Canvas ref={this.weightscanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>                
                 <div style={st().poa()} ref={this.piececanvasdivref}>
                     <Canvas ref={this.piececanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
