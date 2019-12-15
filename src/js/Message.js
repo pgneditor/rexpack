@@ -3,6 +3,12 @@ import { BasicBoard, VARIANT_KEYS } from './BasicBoard.js'
 import { Combo, SelectSaveLoad } from './Widgets.js'
 import { Game, WEIGHT_OPTIONS } from './Chess.js'
 
+const es = new EventSource('/stream')
+ 
+es.onmessage = function (event){
+  console.log(event.data)
+}
+
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
 import '../piece/alpha.css'
@@ -111,6 +117,29 @@ class Message extends React.Component {
     basicboard.positionchanged()
   }
 
+  issueenginecommand(command){
+    console.log("issued engine command", command)
+    fetch('/enginecommand', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        command: command
+      })
+    }).then(
+      (response)=>response.text().then(
+        (text)=>console.log("issue engine command responded with :", text),
+        (err)=>console.log(err)
+      ),
+      (err)=>console.log(err)
+    )
+  }
+
+  uci(){
+    this.issueenginecommand("uci")
+  }
+
   render(){            
     let sortedchilds = []
     if(this.state.gamenode) sortedchilds = this.state.gamenode.sortedchilds()    
@@ -146,6 +175,7 @@ class Message extends React.Component {
             {this.variantcombo}
           </div>            
           {this.selectsaveload}
+          <input type="button" value="uci" onClick={this.uci.bind(this)}></input>
           <a ref={this.downloadref} style={st().pad(3)} href="#" download="board.png" onClick={this.download.bind(this)}>Export</a>                     
         </div>
       </div>

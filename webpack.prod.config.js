@@ -70,7 +70,8 @@ module.exports = {
     new CopyWebpackPlugin([
       {from:'./src/img',to:'./src/img'},
       {from:'./src/piece',to:'./src/piece'},
-      {from:'./src/worker',to:'./src/worker'}
+      {from:'./src/worker',to:'./src/worker'},
+      {from:'./src/bin',to:'./src/bin'}
     ]), 
     new MiniCssExtractPlugin({
       filename: '[name].css',
