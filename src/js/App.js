@@ -66,6 +66,9 @@ class App extends React.Component {
         this.enginelogref.current.value = this.enginelog.text()
       }
     }).bind(this)
+
+    this.putbucket("test.txt", "bucket test")
+    this.getbucket("test.txt")
   }
 
   load(id){
@@ -144,6 +147,40 @@ class App extends React.Component {
     let basicboard = this.basicboardref.current
     basicboard.game.gamenodes[id].weights[i] = w
     basicboard.positionchanged()
+  }
+
+  putbucket(filename, content){
+    fetch('/putbucket', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        filename: filename,
+        content: content
+      })
+    }).then(
+      (response)=>response.text().then(
+        (text)=>{console.log("putbucket responded with :", text)},
+        (err)=>console.log(err)
+      ),
+      (err)=>console.log(err)
+    )
+  }
+
+  getbucket(filename){
+    fetch(`/getbucket?filename=${filename}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }).then(
+      (response)=>response.text().then(
+        (text)=>{console.log("getbucket responded with :", text)},
+        (err)=>console.log(err)
+      ),
+      (err)=>console.log(err)
+    )
   }
 
   issueenginecommand(command){

@@ -4,3 +4,8 @@ dist_dev
 
 Coverage
 coverage
+
+sacckey.json
+composedsacckey.json
+makeenv.bat
+temp.txt
