@@ -235,19 +235,18 @@ class App extends React.Component {
       this.restarttimeout = setTimeout(function(){
         this.go(this.strippedfen(gamenode.fen))
       }.bind(this), 2000)      
-    }else{
-      let analysiskey = `analysis/${this.getvariant()}/${this.strippedfen(gamenode.fen)}`
-      let stored = localStorage.getItem(analysiskey)
-      this.setState({lastanalysis: "no analysis"})
-      if(stored){
-        this.logsep()        
-        let summary = JSON.parse(stored)
-        this.setState({lastanalysis: summary.join("\n")})
-        for(let line of summary.slice().reverse()){
-          this.enginelog.log(new LogItem(line))
-        }
+    }
+    let analysiskey = `analysis/${this.getvariant()}/${this.strippedfen(gamenode.fen)}`
+    let stored = localStorage.getItem(analysiskey)
+    this.setState({lastanalysis: "no analysis"})
+    if(stored){
+      this.logsep()        
+      let summary = JSON.parse(stored)
+      this.setState({lastanalysis: summary.join("\n")})
+      for(let line of summary.slice().reverse()){
+        this.enginelog.log(new LogItem(line))
       }
-    }    
+    }  
     basicboard.reportpgn((payload)=>{
       let pgn = payload.pgn ? payload.pgn : "No moves."
       this.setState({
