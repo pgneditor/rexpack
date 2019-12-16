@@ -138,6 +138,7 @@ export class BasicBoard extends React.Component {
         this.squarecanvasref = React.createRef()
         this.highlightcanvasref = React.createRef()
         this.weightscanvasref = React.createRef()
+        this.analysiscanvasref = React.createRef()
         this.piececanvasref = React.createRef()
         this.dragpiececanvasref = React.createRef()
         this.piececanvasdivref = React.createRef()
@@ -301,6 +302,10 @@ export class BasicBoard extends React.Component {
         return this.weightscanvasref.current
     }
 
+    getanalysiscanvas(){
+        return this.analysiscanvasref.current
+    }
+
     getbackgroundcanvas(){
         return this.backgroundcanvasref.current
     }
@@ -324,6 +329,10 @@ export class BasicBoard extends React.Component {
         }        
     }
 
+    arrowscalefactor(){
+        return this.boardsize() / 560
+    }
+
     highlightlastmove(){
         let highlightcanvas = this.gethighlightcanvas()
         highlightcanvas.clear()
@@ -331,7 +340,7 @@ export class BasicBoard extends React.Component {
             let genalgeb = this.game.getcurrentnode().genalgeb
             if(genalgeb){
                 this.drawmovearrow(highlightcanvas, this.movefromalgeb(genalgeb), {
-                    scalefactor: this.boardsize() / 560
+                    scalefactor: this.arrowscalefactor()
                 })
             }
         }catch(err){this.lasterr = err}
@@ -344,7 +353,7 @@ export class BasicBoard extends React.Component {
             let childs = this.game.getcurrentnode().revsortedchilds()
             for(let child of childs){
                 this.drawmovearrow(weightscanvas, this.movefromalgeb(child.genalgeb), {
-                    scalefactor: this.boardsize() / 560,
+                    scalefactor: this.arrowscalefactor(),
                     color: "#00f",
                     opacity: child.weights[0] / 10
                 })
@@ -352,10 +361,32 @@ export class BasicBoard extends React.Component {
         }catch(err){this.lasterr = err}
     }
 
+    scoretocolor(score){
+        return Math.floor(Math.min(( Math.abs(score) / 1000.0 ) * 192.0 + 63.0, 255.0))
+    }
+
+    highlightanalysis(summary){        
+        let analysiscanvas = this.getanalysiscanvas()
+        analysiscanvas.clear()
+        for(let i in summary){
+            let line = summary[i]
+            let lineparts = line.split(" ")
+            //let depth = parseInt(lineparts[0])
+            let move = this.movefromalgeb(lineparts[1])
+            let scorenumerical = parseInt(lineparts[2])
+            let auxscalefactor = 1.0 / ( parseInt(i) + 1 )
+            this.drawmovearrow(analysiscanvas, move, {
+                scalefactor: this.arrowscalefactor(),
+                auxscalefactor: auxscalefactor,
+                color: `rgb(${scorenumerical<0?this.scoretocolor(scorenumerical):0},${scorenumerical>0?this.scoretocolor(scorenumerical):0},0)`
+            })
+        }
+    }
+
     drawboard(){        
         this.drawsquares()        
         this.highlightlastmove()
-        this.highlightweights()
+        this.highlightweights()        
         this.drawpieces()
     }
 
@@ -581,6 +612,9 @@ export class BasicBoard extends React.Component {
                 </div>                
                 <div style={st().poa()}>
                     <Canvas ref={this.weightscanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
+                </div>                
+                <div style={st().poa()}>
+                    <Canvas ref={this.analysiscanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>                
                 <div style={st().poa()} ref={this.piececanvasdivref}>
                     <Canvas ref={this.piececanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>

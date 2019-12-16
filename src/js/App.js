@@ -78,94 +78,102 @@ class App extends React.Component {
   }
 
   processengineout(line){            
-      if(line.match(/^info/)){
-        let depth = null
-        let md = line.match(/ depth (.+)/)
-        if(md){
-          depth = parseInt(md[1])          
-        }                
-        let move = null
-        let mp = line.match(/ pv (.+)/)
-        if(mp){
-          let pv = mp[1].split(" ")
-          move = pv[0]          
-        }        
-        if(depth){
-          if(depth < this.highestdepth) return
-          this.highestdepth = depth
-        }        
-        if(!move) return
-        let scorecp = null
-        let mscp = line.match(/ score cp (.+)/)
-        if(mscp){
-          scorecp = parseInt(mscp[1])
+    if(this.ucion){
+      this.enginelog.log(new LogItem(line))
+      if(line.match(/^uciok/)) this.ucion = false
+      return
+    }
+    if(line.match(/^info/)){
+      let depth = null
+      let md = line.match(/ depth (.+)/)
+      if(md){
+        depth = parseInt(md[1])          
+      }                
+      let move = null
+      let mp = line.match(/ pv (.+)/)
+      if(mp){
+        let pv = mp[1].split(" ")
+        move = pv[0]          
+      }        
+      if(depth){
+        if(depth < this.highestdepth) return
+        this.highestdepth = depth
+      }        
+      if(!move) return
+      let scorecp = null
+      let mscp = line.match(/ score cp (.+)/)
+      if(mscp){
+        scorecp = parseInt(mscp[1])
+      }
+      let scoremate = null
+      let msmate = line.match(/ score mate (.+)/)
+      if(msmate){
+        scoremate = parseInt(msmate[1])
+      }
+      let scorenumerical = scorecp
+      if(scoremate){
+        if(scoremate < 0){
+          scorenumerical = - MATE_SCORE - scoremate
+        }else{
+          scorenumerical = MATE_SCORE - scoremate
         }
-        let scoremate = null
-        let msmate = line.match(/ score mate (.+)/)
-        if(msmate){
-          scoremate = parseInt(msmate[1])
+      }        
+      this.pvs[move] = {depth: this.highestdepth, scorecp: scorecp, scoremate: scoremate, scorenumerical: scorenumerical}        
+      let newpvs = {}
+      for(let move in this.pvs){
+        if(this.pvs[move].depth >= (this.highestdepth - 1)){
+          newpvs[move] = this.pvs[move]
         }
-        let scorenumerical = scorecp
-        if(scoremate){
-          if(scoremate < 0){
-            scorenumerical = - MATE_SCORE - scoremate
-          }else{
-            scorenumerical = MATE_SCORE - scoremate
-          }
-        }        
-        this.pvs[move] = {depth: this.highestdepth, scorecp: scorecp, scoremate: scoremate, scorenumerical: scorenumerical}        
-        let newpvs = {}
-        for(let move in this.pvs){
-          if(this.pvs[move].depth >= (this.highestdepth - 1)){
-            newpvs[move] = this.pvs[move]
-          }
+      }
+      this.pvs = newpvs        
+      this.sortedpvs = Object.keys(this.pvs).sort((a, b)=>this.pvs[b].scorenumerical - this.pvs[a].scorenumerical)                                
+      if(this.sortedpvs.length >= this.multipv){
+        let mindepth = null
+        for(let move of this.sortedpvs.slice(0, this.multipv)){            
+          let currentdepth = this.pvs[move].depth
+          if(mindepth === null) mindepth = currentdepth
+          else if(currentdepth < mindepth) mindepth = currentdepth
         }
-        this.pvs = newpvs        
-        this.sortedpvs = Object.keys(this.pvs).sort((a, b)=>this.pvs[b].scorenumerical - this.pvs[a].scorenumerical)                                
-        if(this.sortedpvs.length >= this.multipv){
-          let mindepth = null
-          for(let move of this.sortedpvs.slice(0, this.multipv)){            
-            let currentdepth = this.pvs[move].depth
-            if(mindepth === null) mindepth = currentdepth
-            else if(currentdepth < mindepth) mindepth = currentdepth
-          }
-          this.completeddepth = mindepth          
-        }        
-        if(this.completeddepth > this.lastcompleteddepth){
-          this.lastcompleteddepth = this.completeddepth
-          this.logsep()
-          let summary = []
-          let i = 0
-          for(let move of this.sortedpvs.slice().reverse()){
-            if(i<this.multipv){
-              let summaryline = `${this.lastcompleteddepth} ${move} ${this.pvs[move].scorenumerical}`
-              this.enginelog.log(new LogItem(summaryline))
-              summary.unshift(summaryline)        
-            }        
-            i++
-          }
-          let analysiskey = `analysis/${this.getvariant()}/${this.analyzedfen}`
-          let storedanalysis = localStorage.getItem(analysiskey)
-          let storeanalysisok = true
-          if(storedanalysis){
-            let oldsummary = JSON.parse(storedanalysis)
-            let best = oldsummary[0]
-            let bestparts = best.split(" ")
-            let bestdepth = parseInt(bestparts[0])
-            if(this.lastcompleteddepth <= bestdepth){
-              storeanalysisok = false
-              console.log("not storing analyis of lower depth")
-            }
-          }   
-          if(storeanalysisok) localStorage.setItem(analysiskey, JSON.stringify(summary))
-          let storedallanalyiskeys = localStorage.getItem("allanalysiskeys")          
-          let allanalysiskeys =  storedallanalyiskeys ? JSON.parse(storedallanalyiskeys) : []
-          if(!allanalysiskeys.includes(analysiskey)){
-            allanalysiskeys.push(analysiskey)
-            localStorage.setItem("allanalysiskeys", JSON.stringify(allanalysiskeys))
-          }
+        this.completeddepth = mindepth          
+      }        
+      if(this.completeddepth > this.lastcompleteddepth){
+        this.lastcompleteddepth = this.completeddepth
+        this.logsep()
+        let summary = []
+        let i = 0
+        for(let move of this.sortedpvs.slice().reverse()){
+          if(i<this.multipv){
+            let summaryline = `${this.lastcompleteddepth} ${move} ${this.pvs[move].scorenumerical}`
+            this.enginelog.log(new LogItem(summaryline))
+            summary.unshift(summaryline)        
+          }        
+          i++
         }
-      }      
+        let analysiskey = `analysis/${this.getvariant()}/${this.analyzedfen}`
+        let storedanalysis = localStorage.getItem(analysiskey)
+        let storeanalysisok = true
+        if(storedanalysis){
+          let oldsummary = JSON.parse(storedanalysis)
+          let best = oldsummary[0]
+          let bestparts = best.split(" ")
+          let bestdepth = parseInt(bestparts[0])
+          if(this.lastcompleteddepth <= bestdepth){
+            storeanalysisok = false
+            console.log("not storing analyis of lower depth")
+          }
+        }   
+        if(storeanalysisok){
+          localStorage.setItem(analysiskey, JSON.stringify(summary))
+          this.basicboardref.current.highlightanalysis(summary)
+        }
+        let storedallanalyiskeys = localStorage.getItem("allanalysiskeys")          
+        let allanalysiskeys =  storedallanalyiskeys ? JSON.parse(storedallanalyiskeys) : []
+        if(!allanalysiskeys.includes(analysiskey)){
+          allanalysiskeys.push(analysiskey)
+          localStorage.setItem("allanalysiskeys", JSON.stringify(allanalysiskeys))
+        }
+      }
+    }      
   }
 
   load(id){
@@ -225,6 +233,7 @@ class App extends React.Component {
 
   positionchanged(gamenode){           
     let basicboard = this.basicboardref.current
+    basicboard.highlightanalysis([])
     if(this.enginerunning){
       console.log("restart engine")
       this.stop()
@@ -246,6 +255,7 @@ class App extends React.Component {
       for(let line of summary.slice().reverse()){
         this.enginelog.log(new LogItem(line))
       }
+      if(!this.enginerunning) basicboard.highlightanalysis(summary)
     }  
     basicboard.reportpgn((payload)=>{
       let pgn = payload.pgn ? payload.pgn : "No moves."
@@ -328,6 +338,8 @@ class App extends React.Component {
   }
 
   uci(){
+    this.logsep()
+    this.ucion = true
     this.issueenginecommand("uci")
   }
 
