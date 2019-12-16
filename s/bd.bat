@@ -3,5 +3,5 @@ rem Build Development
 set REXPACKDEV=1
 
 call npm run buildDev
-pause
+rem pause
 call s\sd

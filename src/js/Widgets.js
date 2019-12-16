@@ -21,9 +21,9 @@ export class Combo extends React.Component {
         super()                
         this.id = props.id || "combo"
         this.state = {
-            options: props.options || [["option1", "display1"], ["option2", "display2"]],
-            selected: props.selected || localStorage.getItem(this.id) || "option1"
+            options: props.options || [["optionvalue", "Option"]]
         }                     
+        this.state.selected = props.selected || localStorage.getItem(this.id) || this.state.options[0][0]
         this.changecallback = props.changecallback || this.defaultchangecallback
     }
 

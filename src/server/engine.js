@@ -5,7 +5,7 @@ export const sse = new SSE(["sse init"])
 
 export class Engine{
     processstdout(data){
-        console.log(data)        
+        //console.log(data)        
         sse.send(data)
     }
 
