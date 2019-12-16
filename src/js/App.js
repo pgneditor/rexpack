@@ -25,7 +25,8 @@ class App extends React.Component {
   constructor(){
     super()
     this.state = {
-      user: localStorage.getItem("user") || "anonymous"
+      user: localStorage.getItem("user") || "anonymous",
+      lastanalysis: "no analyis"
     }
     this.basicboardref = React.createRef()
     this.downloadref = React.createRef()
@@ -143,7 +144,7 @@ class App extends React.Component {
             }        
             i++
           }
-          let analysiskey = `analysis/${this.analyzedfen}`
+          let analysiskey = `analysis/${this.getvariant()}/${this.analyzedfen}`
           let storedanalysis = localStorage.getItem(analysiskey)
           let storeanalysisok = true
           if(storedanalysis){
@@ -235,11 +236,13 @@ class App extends React.Component {
         this.go(this.strippedfen(gamenode.fen))
       }.bind(this), 2000)      
     }else{
-      let analysiskey = `analysis/${this.strippedfen(gamenode.fen)}`
+      let analysiskey = `analysis/${this.getvariant()}/${this.strippedfen(gamenode.fen)}`
       let stored = localStorage.getItem(analysiskey)
+      this.setState({lastanalysis: "no analysis"})
       if(stored){
-        this.logsep()
+        this.logsep()        
         let summary = JSON.parse(stored)
+        this.setState({lastanalysis: summary.join("\n")})
         for(let line of summary.slice().reverse()){
           this.enginelog.log(new LogItem(line))
         }
@@ -416,6 +419,10 @@ class App extends React.Component {
         }
       }
     }
+    for(let key of ["mainboardvariant", "variantcombo", "threadscombo", "multipvcombo"]){
+      let storedother = localStorage.getItem(key)
+      if(storedother) blob[key] = storedother
+    }
     this.putbucket(this.state.user + ".blob", JSON.stringify(blob), (text)=>{
       window.alert(text)
     })
@@ -441,6 +448,10 @@ class App extends React.Component {
 
   dogo(){
     this.go()
+  }
+
+  nop(){
+    this.nop = true
   }
 
   render(){            
@@ -496,7 +507,8 @@ class App extends React.Component {
           </div>
           <a ref={this.downloadref} style={st().pad(3)} href="#" download="board.png" onClick={this.download.bind(this)}>Export</a>                     
         </div>
-        <div>
+        <div style={st().disp("flex")}>
+          <textarea value={this.state.lastanalysis} onChange={this.nop.bind(this)} style={st().w(100).h(100)}></textarea>
           <textarea ref={this.enginelogref} style={st().w(800).h(100)}></textarea>
         </div>
       </div>
