@@ -2,12 +2,14 @@ import React from 'react'
 import { BasicBoard, VARIANT_KEYS } from './BasicBoard.js'
 import { Combo, SelectSaveLoad } from './Widgets.js'
 import { Game, WEIGHT_OPTIONS } from './Chess.js'
-import { LogItem, Logger, UID } from './Utils.js'
+import { LogItem, Logger } from './Utils.js'
 
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
 import '../piece/alpha.css'
 import { st } from './Style.js';
+
+const MATE_SCORE = 10000
 
 /*const Message = () => {
   return (
@@ -42,7 +44,7 @@ class App extends React.Component {
 
     this.es = new EventSource('/stream')
 
-    this.enginelog = new Logger({})
+    this.enginelog = new Logger({logref: this.enginelogref})
 
     this.state.enginealive = "no engine detected"
     
@@ -62,15 +64,95 @@ class App extends React.Component {
         }else{
           text = text.replace(/\r/g, "")
           let lines = text.split("\n")
-          for(let line of lines) if(line != "") this.enginelog.log(new LogItem(line))
-        }      
-
-        this.enginelogref.current.value = this.enginelog.text()
+          for(let line of lines) if(line != ""){
+            //this.enginelog.log(new LogItem(line))
+            this.processengineout(line)
+          }
+        }              
       }
-    }).bind(this)
+    }).bind(this)    
 
     //this.putbucket("test.txt", "bucket test")
     //this.getbucket("test.txt")
+  }
+
+  processengineout(line){            
+      if(line.match(/^info/)){
+        let depth = null
+        let md = line.match(/ depth (.+)/)
+        if(md){
+          depth = parseInt(md[1])          
+        }                
+        let move = null
+        let mp = line.match(/ pv (.+)/)
+        if(mp){
+          let pv = mp[1].split(" ")
+          move = pv[0]          
+        }        
+        if(depth){
+          if(depth < this.highestdepth) return
+          this.highestdepth = depth
+        }        
+        if(!move) return
+        let scorecp = null
+        let mscp = line.match(/ score cp (.+)/)
+        if(mscp){
+          scorecp = parseInt(mscp[1])
+        }
+        let scoremate = null
+        let msmate = line.match(/ score mate (.+)/)
+        if(msmate){
+          scoremate = parseInt(msmate[1])
+        }
+        let scorenumerical = scorecp
+        if(scoremate){
+          if(scoremate < 0){
+            scorenumerical = - MATE_SCORE - scoremate
+          }else{
+            scorenumerical = MATE_SCORE - scoremate
+          }
+        }        
+        this.pvs[move] = {depth: this.highestdepth, scorecp: scorecp, scoremate: scoremate, scorenumerical: scorenumerical}        
+        let newpvs = {}
+        for(let move in this.pvs){
+          if(this.pvs[move].depth >= (this.highestdepth - 1)){
+            newpvs[move] = this.pvs[move]
+          }
+        }
+        this.pvs = newpvs        
+        this.sortedpvs = Object.keys(this.pvs).sort((a, b)=>this.pvs[b].scorenumerical - this.pvs[a].scorenumerical)                                
+        if(this.sortedpvs.length >= this.multipv){
+          let mindepth = null
+          for(let move of this.sortedpvs.slice(0, this.multipv)){            
+            let currentdepth = this.pvs[move].depth
+            if(mindepth === null) mindepth = currentdepth
+            else if(currentdepth < mindepth) mindepth = currentdepth
+          }
+          this.completeddepth = mindepth          
+        }        
+        if(this.completeddepth > this.lastcompleteddepth){
+          this.lastcompleteddepth = this.completeddepth
+          this.logsep()
+          let summary = []
+          let i = 0
+          for(let move of this.sortedpvs.slice().reverse()){
+            if(i<this.multipv){
+              let summaryline = `${this.lastcompleteddepth} ${move} ${this.pvs[move].scorenumerical}`
+              this.enginelog.log(new LogItem(summaryline))
+              summary.unshift(summaryline)        
+            }        
+            i++
+          }
+          let analysiskey = `analysis/${this.analyzedfen}`
+          localStorage.setItem(analysiskey, JSON.stringify(summary))
+          let storedallanalyiskeys = localStorage.getItem("allanalysiskeys")          
+          let allanalysiskeys =  storedallanalyiskeys ? JSON.parse(storedallanalyiskeys) : []
+          if(!allanalysiskeys.includes(analysiskey)){
+            allanalysiskeys.push(analysiskey)
+            localStorage.setItem("allanalysiskeys", JSON.stringify(allanalysiskeys))
+          }
+        }
+      }      
   }
 
   load(id){
@@ -130,6 +212,27 @@ class App extends React.Component {
 
   positionchanged(gamenode){           
     let basicboard = this.basicboardref.current
+    if(this.enginerunning){
+      console.log("restart engine")
+      this.stop()
+      if(this.restarttimeout){
+        window.clearTimeout(this.restarttimeout)      
+        console.log("cleared restart")
+      }
+      this.restarttimeout = setTimeout(function(){
+        this.go(this.strippedfen(gamenode.fen))
+      }.bind(this), 2000)      
+    }else{
+      let analysiskey = `analysis/${this.strippedfen(gamenode.fen)}`
+      let stored = localStorage.getItem(analysiskey)
+      if(stored){
+        this.logsep()
+        let summary = JSON.parse(stored)
+        for(let line of summary.slice().reverse()){
+          this.enginelog.log(new LogItem(line))
+        }
+      }
+    }    
     basicboard.reportpgn((payload)=>{
       let pgn = payload.pgn ? payload.pgn : "No moves."
       this.setState({
@@ -137,7 +240,7 @@ class App extends React.Component {
         gamenode: gamenode
       })
       basicboard.highlightweights()
-    })    
+    })        
   }
 
   makemove(id){
@@ -226,18 +329,37 @@ class App extends React.Component {
     return this.getgame().variant
   }
 
-  go(){
+  strippedfen(fen){
+    let fenparts = fen.split(" ")
+    return(fenparts[0] + " " + fenparts[1] + " " + fenparts[2] + " " + fenparts[3] + " 0 1")
+  }
+
+  go(fen){
+    this.highestdepth = 0
+    this.completeddepth = 0
+    this.lastcompleteddepth = 0
+    this.pvs = {}
+    this.sortedpvs = []
+    this.multipv = parseInt(this.multipvcomboref.current.state.selected)
     let currentnode = this.getcurrentnode()
+    this.analyzedfen = fen || this.strippedfen(currentnode.fen)
+    console.log("fen", this.analyzedfen)
     let variant = this.getvariant()
     this.issueenginecommand(`setoption name UCI_Variant value ${variant}`)    
     this.issueenginecommand(`setoption name Threads value ${this.threadscomboref.current.state.selected}`)    
-    this.issueenginecommand(`setoption name MultiPV value ${this.multipvcomboref.current.state.selected}`)    
-    this.issueenginecommand(`position fen ${currentnode.fen}`)    
+    this.issueenginecommand(`setoption name MultiPV value ${this.multipv}`)    
+    this.issueenginecommand(`position fen ${this.analyzedfen}`)    
     this.issueenginecommand(`go infinite`)    
+    this.enginerunning = true    
+  }
+
+  logsep(){
+    this.enginelog.log(new LogItem(`------------`))
   }
 
   stop(){        
     this.issueenginecommand(`stop`)    
+    this.enginerunning = false
   }
 
   setuser(){
@@ -271,6 +393,17 @@ class App extends React.Component {
 
   backup(){
     let blob = this.getstudiesblob()
+    let storedallanalyiskeys = localStorage.getItem("allanalysiskeys")
+    if(storedallanalyiskeys){
+      let allanalysiskeys = JSON.parse(storedallanalyiskeys)
+      blob.allanalysiskeys = storedallanalyiskeys
+      for(let key of allanalysiskeys){
+        let storedanalysis = localStorage.getItem(key)
+        if(storedanalysis){
+          blob[key] = storedanalysis
+        }
+      }
+    }
     this.putbucket(this.state.user + ".blob", JSON.stringify(blob), (text)=>{
       window.alert(text)
     })
@@ -292,6 +425,10 @@ class App extends React.Component {
         document.location.reload()
       }
     })    
+  }
+
+  dogo(){
+    this.go()
   }
 
   render(){            
@@ -331,7 +468,7 @@ class App extends React.Component {
           {this.selectsaveload}
           <div style={st().pad(3).bc("#aaf").disp("inline-block")}>              
             <input type="button" value="uci" onClick={this.uci.bind(this)}></input>
-            <input type="button" value="go" onClick={this.go.bind(this)}></input>
+            <input type="button" value="go" onClick={this.dogo.bind(this)}></input>
             <input type="button" value="stop" onClick={this.stop.bind(this)}></input>            
             <label style={st().fs(10).mar(3)}>Threads</label>
             {this.threadscombo}

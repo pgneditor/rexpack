@@ -416,11 +416,13 @@ export class Logger{
     constructor(props){
         this.items = []
         this.maxitems = props.maxitems || 50
+        this.logref = props.logref
     }
 
     log(item){
         this.items.unshift(item)
         while(this.items.length > this.maxitems) this.items.pop()
+        if(this.logref) if(this.logref.current) this.logref.current.value = this.text()
     }
 
     text(){
