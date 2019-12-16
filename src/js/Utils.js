@@ -427,3 +427,11 @@ export class Logger{
         return this.items.map((item)=>item.text).join("\n")
     }
 }
+
+// https://gist.github.com/gordonbrander/2230317
+export function UID() {
+    // Math.random should be unique because of its seeding algorithm.
+    // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+    // after the decimal.
+    return 'id' + Math.random().toString(36).substr(2, 9)
+}

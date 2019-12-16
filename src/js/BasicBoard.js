@@ -3,7 +3,7 @@ import React from 'react'
 import { st } from './Style.js'
 import { Canvas, Img } from './Canvas.js'
 import { Square, Move, Game, GameNode } from './Chess.js'
-import { Vect, getStyle } from './Utils.js'
+import { Vect, getStyle, UID } from './Utils.js'
 
 const worker = new Worker('../src/worker/scalachessjs.js')
 const workercallbacks = {}
@@ -424,7 +424,7 @@ export class BasicBoard extends React.Component {
     }
 
     reportpgn(callback){
-        let id = performance.now()
+        let id = UID()
         workercallbacks[id] = (payload)=>{
             delete workercallbacks[id]    
             callback(payload)
@@ -440,7 +440,7 @@ export class BasicBoard extends React.Component {
     setvariant(variant){
         this.variant = variant
         this.game = Game().fromblob({variant: this.variant})
-        let id = performance.now()
+        let id = UID()
         workercallbacks[id] = (payload)=>{
             delete workercallbacks[id]    
             let fen = payload.setup.fen
@@ -520,13 +520,13 @@ export class BasicBoard extends React.Component {
             this.drawpiece(dragpiececanvas, this.piececoords(this.dragtargetsq), this.draggedpiece)
             let from = this.squaretoalgeb(this.draggedsq)
             let to = this.squaretoalgeb(this.dragtargetsq)            
-            let id = performance.now()
+            let id = UID()
             workercallbacks[id] = (payload)=>{
                 delete workercallbacks[id]                
                 let dests = payload.dests[from]
                 if(dests){                    
                     if(dests.find((testto)=>(testto == to))){                        
-                        let id = performance.now()
+                        let id = UID()
                         workercallbacks[id] = (payload)=>{
                             delete workercallbacks[id]                                        
                             let fen = payload.situation.fen

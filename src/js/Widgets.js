@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 import { st } from './Style.js'
+import { UID } from './Utils.js'
 
 export class Combo extends React.Component {
     static get propTypes() { 
@@ -93,7 +94,7 @@ export class SelectSaveLoad extends React.Component{
             if(!option){
                 window.alert("Option empty.")
             }else{
-                let id = performance.now()
+                let id = UID()
                 let newoptions = this.state.options
                 newoptions.push([id, option])
                 let newstate = {

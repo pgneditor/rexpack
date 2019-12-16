@@ -1,5 +1,7 @@
 rem Build Production
 
+echo off
+
 set REXPACKDEV=1
 
 call makeenv.bat

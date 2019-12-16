@@ -2,7 +2,7 @@ import React from 'react'
 import { BasicBoard, VARIANT_KEYS } from './BasicBoard.js'
 import { Combo, SelectSaveLoad } from './Widgets.js'
 import { Game, WEIGHT_OPTIONS } from './Chess.js'
-import { LogItem, Logger } from './Utils.js'
+import { LogItem, Logger, UID } from './Utils.js'
 
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
@@ -22,7 +22,9 @@ import { st } from './Style.js';
 class App extends React.Component {
   constructor(){
     super()
-    this.state = {}
+    this.state = {
+      user: localStorage.getItem("user") || "anonymous"
+    }
     this.basicboardref = React.createRef()
     this.downloadref = React.createRef()
     this.selectsaveloadref = React.createRef()
@@ -67,8 +69,8 @@ class App extends React.Component {
       }
     }).bind(this)
 
-    this.putbucket("test.txt", "bucket test")
-    this.getbucket("test.txt")
+    //this.putbucket("test.txt", "bucket test")
+    //this.getbucket("test.txt")
   }
 
   load(id){
@@ -149,7 +151,7 @@ class App extends React.Component {
     basicboard.positionchanged()
   }
 
-  putbucket(filename, content){
+  putbucket(filename, content, callback){
     fetch('/putbucket', {
       method: "POST",
       headers: {
@@ -161,14 +163,17 @@ class App extends React.Component {
       })
     }).then(
       (response)=>response.text().then(
-        (text)=>{console.log("putbucket responded with :", text)},
+        (text)=>{
+          console.log("putbucket responded with :", text)
+          if(callback) callback(text)
+        },
         (err)=>console.log(err)
       ),
       (err)=>console.log(err)
     )
   }
 
-  getbucket(filename){
+  getbucket(filename, callback){
     fetch(`/getbucket?filename=${filename}`, {
       method: "GET",
       headers: {
@@ -176,7 +181,10 @@ class App extends React.Component {
       }
     }).then(
       (response)=>response.text().then(
-        (text)=>{console.log("getbucket responded with :", text)},
+        (text)=>{
+          console.log("getbucket responded with content of size", text.length)
+          if(callback) callback(text)
+        },
         (err)=>console.log(err)
       ),
       (err)=>console.log(err)
@@ -232,6 +240,50 @@ class App extends React.Component {
     this.issueenginecommand(`stop`)    
   }
 
+  setuser(){
+    let user = window.prompt("User")
+    if(user){
+      localStorage.setItem("user", user)
+      this.setState({user: user})
+    }
+  }
+
+  getstudiesblob(){
+    let blob = {}
+    for(let vk of VARIANT_KEYS){
+      let variant = vk[0]
+      let key = `${variant}/selectsaveload`
+      let value = localStorage.getItem(key)
+      if(value) blob[key] = value
+    }
+    return blob
+  }
+
+  backup(){
+    let blob = this.getstudiesblob()
+    this.putbucket(this.state.user + ".blob", JSON.stringify(blob), (text)=>{
+      window.alert(text)
+    })
+  }
+
+  restore(){
+    this.getbucket(this.state.user + ".blob", (text)=>{
+      if(text == "not found"){
+        window.alert("No backup available for this user.")
+      }else{
+        let blob = JSON.parse(text)
+        let i=0
+        for(let key in blob){
+          console.log("setting key", key)
+          localStorage.setItem(key, blob[key])          
+          i++
+        }
+        window.alert(`Set ${i} key(s).`)
+        document.location.reload()
+      }
+    })    
+  }
+
   render(){            
     let sortedchilds = []
     if(this.state.gamenode) sortedchilds = this.state.gamenode.sortedchilds()    
@@ -276,6 +328,12 @@ class App extends React.Component {
             <label style={st().fs(10).mar(3)}>MultiPV</label>
             {this.multipvcombo}
             <label style={st().fs(10).mar(5)}>{this.state.enginealive}</label>
+          </div>
+          <div style={st().pad(3).bc("#faf").disp("inline-block")}>              
+            <input type="button" value="Set user" onClick={this.setuser.bind(this)}></input>            
+            <label style={st().mar(3)}>{this.state.user}</label>
+            <input type="button" value="Backup" onClick={this.backup.bind(this)}></input>            
+            <input type="button" value="Restore" onClick={this.restore.bind(this)}></input>            
           </div>
           <a ref={this.downloadref} style={st().pad(3)} href="#" download="board.png" onClick={this.download.bind(this)}>Export</a>                     
         </div>

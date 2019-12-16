@@ -40,7 +40,13 @@ export function startServer(app, PORT, DIST_DIR, express){
         }
         let filename = req.query.filename
         console.log("dowloading", filename)
-        bucket.file(filename).download((err, contents)=>res.send(contents.toString()))
+        bucket.file(filename).download((err, contents)=>{
+            if(err){
+                res.send("not found")
+            }else{
+                res.send(contents.toString())
+            }            
+        })
     })
 
     app.post('/putbucket', (req, res) => {                
