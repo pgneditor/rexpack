@@ -144,7 +144,19 @@ class App extends React.Component {
             i++
           }
           let analysiskey = `analysis/${this.analyzedfen}`
-          localStorage.setItem(analysiskey, JSON.stringify(summary))
+          let storedanalysis = localStorage.getItem(analysiskey)
+          let storeanalysisok = true
+          if(storedanalysis){
+            let oldsummary = JSON.parse(storedanalysis)
+            let best = oldsummary[0]
+            let bestparts = best.split(" ")
+            let bestdepth = parseInt(bestparts[0])
+            if(this.lastcompleteddepth <= bestdepth){
+              storeanalysisok = false
+              console.log("not storing analyis of lower depth")
+            }
+          }   
+          if(storeanalysisok) localStorage.setItem(analysiskey, JSON.stringify(summary))
           let storedallanalyiskeys = localStorage.getItem("allanalysiskeys")          
           let allanalysiskeys =  storedallanalyiskeys ? JSON.parse(storedallanalyiskeys) : []
           if(!allanalysiskeys.includes(analysiskey)){
