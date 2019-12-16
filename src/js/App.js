@@ -254,7 +254,17 @@ class App extends React.Component {
       let variant = vk[0]
       let key = `${variant}/selectsaveload`
       let value = localStorage.getItem(key)
-      if(value) blob[key] = value
+      if(value){
+        blob[key] = value
+        let fields = JSON.parse(value)
+        for(let option of fields.options){          
+          let studykey = `${variant}/selectsaveload/${option[0]}`
+          let study = localStorage.getItem(studykey)
+          if(study){
+            blob[studykey] = study
+          }
+        }
+      }
     }
     return blob
   }
