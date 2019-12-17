@@ -7,9 +7,13 @@ import { Vect, getStyle, UID } from './Utils.js'
 
 export const worker = new Worker('../src/worker/scalachessjs.js')
 export const workercallbacks = {}
-worker.addEventListener("message", (e)=>{        
+worker.addEventListener("message", (e)=>{            
     let id = e.data.payload.path || e.data.reqid    
-    workercallbacks[id](e.data.payload)
+    try{
+        workercallbacks[id](e.data.payload)
+    }catch(err){
+        console.log("problem with callback", err, e)
+    }
 })
 
 export const STANDARD_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -143,6 +147,7 @@ export class BasicBoard extends React.Component {
         this.dragpiececanvasref = React.createRef()
         this.piececanvasdivref = React.createRef()
         this.imgcache = {}        
+        this.prompiece = "none"
     }
 
     boardarea(){
@@ -417,6 +422,38 @@ export class BasicBoard extends React.Component {
         piececanvas.clearRect(this.piececoords(sq), Vect(this.piecesize(), this.piecesize()))        
     }
 
+    piecemousedown(ev){
+        if((this.variant == "crazyhouse")&&(this.prompiece != "none")){
+            let bcr = this.piececanvasdivref.current.getBoundingClientRect()
+            let orig = Vect(ev.clientX - bcr.x, ev.clientY - bcr.y)        
+            let sq = this.coordstosq(orig)
+            let pos = this.squaretoalgeb(sq)
+            let id = UID()
+            workercallbacks[id] = (payload)=>{
+                delete workercallbacks[id]                                        
+                let fen = payload.situation.fen
+                let algeb = payload.situation.uci
+                let san = payload.situation.san                            
+                this.makemove(GameNode().fromblob(this.game, {
+                    fen: fen,
+                    genalgeb: algeb,
+                    gensan: san
+                }))    
+            }
+            let payload = {
+                path: id,
+                fen: this.fen,
+                variant: this.variant,
+                pos: pos,
+                role: this.prompiece
+            }                                    
+            worker.postMessage({
+                topic: 'drop',                
+                payload: payload
+            })
+        }
+    }
+
     piecedragstart(ev){
         ev.preventDefault()        
         let bcr = this.piececanvasdivref.current.getBoundingClientRect()
@@ -547,6 +584,11 @@ export class BasicBoard extends React.Component {
         this.positionchanged()                          
     }
 
+    setprompiece(prompiece){
+        this.prompiece = prompiece
+        console.log("prompiece set to", this.prompiece)
+    }
+
     piecemouseup(){
         if(this.piecedragon){
             let dragpiececanvas = this.getdragpiececanvas()
@@ -572,15 +614,19 @@ export class BasicBoard extends React.Component {
                                 gensan: san
                             }))    
                         }
+                        let payload = {
+                            path: id,
+                            fen: this.fen,
+                            variant: this.variant,
+                            orig: from,
+                            dest: to
+                        }                        
+                        if(this.prompiece != "none"){
+                            payload.promotion = this.prompiece
+                        }                        
                         worker.postMessage({
                             topic: 'move',                
-                            payload: {
-                                path: id,
-                                fen: this.fen,
-                                variant: this.variant,
-                                orig: from,
-                                dest: to
-                            }
+                            payload: payload
                         })
                     }else{                        
                         setTimeout(this.drawpieces.bind(this), 0)         
@@ -622,7 +668,7 @@ export class BasicBoard extends React.Component {
                 <div style={st().poa()} ref={this.piececanvasdivref}>
                     <Canvas ref={this.piececanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>                
-                <div style={st().poa()} draggable={true} onMouseUp={this.piecemouseup.bind(this)} onMouseMove={this.piecemousemove.bind(this)} onDragStart={this.piecedragstart.bind(this)}>
+                <div style={st().poa()} draggable={true} onMouseDown={this.piecemousedown.bind(this)} onMouseUp={this.piecemouseup.bind(this)} onMouseMove={this.piecemousemove.bind(this)} onDragStart={this.piecedragstart.bind(this)}>
                     <Canvas ref={this.dragpiececanvasref} style={st().poa()} width={this.boardsize()} height={this.boardsize()}></Canvas>
                 </div>                
             </div>

@@ -60,6 +60,7 @@ class App extends React.Component {
       lastanalysis: "no analyis"
     }
     this.basicboardref = React.createRef()
+    this.prompieceref = React.createRef()
     this.downloadref = React.createRef()
     this.selectsaveloadref = React.createRef()
     this.enginelogref = React.createRef()
@@ -294,6 +295,8 @@ class App extends React.Component {
       })
       basicboard.highlightweights()
     })        
+    this.prompieceref.current.setvalue("none")
+    basicboard.prompiece = "none"
   }
 
   makemove(id){
@@ -494,6 +497,11 @@ class App extends React.Component {
     this.nop = true
   }
 
+  prompiecechanged(value){    
+    let basicboard = this.basicboardref.current
+    if(basicboard) basicboard.setprompiece(value)
+  }
+
   render(){            
     let sortedchilds = []
     if(this.state.gamenode) sortedchilds = this.state.gamenode.sortedchilds()    
@@ -520,6 +528,7 @@ class App extends React.Component {
         </div>      
         <div>           
           <div style={st().pad(3).bc("#7f7").disp("inline-block")}>              
+            <Combo changecallback={this.prompiecechanged.bind(this)} ref={this.prompieceref} options={[["none", "None"],["Queen", "Queen"],["Rook", "Rook"],["Bishop", "Bishop"],["Knight", "Knight"],["Pawn", "Pawn"],["King", "King"]]}></Combo>
             <input type="button" value="Reset" onClick={this.reset.bind(this)}></input>
             <input type="button" value="<<" onClick={this.tobegin.bind(this)}></input>
             <input type="button" value="<" onClick={this.back.bind(this)}></input>
