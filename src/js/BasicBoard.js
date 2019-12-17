@@ -5,8 +5,8 @@ import { Canvas, Img } from './Canvas.js'
 import { Square, Move, Game, GameNode } from './Chess.js'
 import { Vect, getStyle, UID } from './Utils.js'
 
-const worker = new Worker('../src/worker/scalachessjs.js')
-const workercallbacks = {}
+export const worker = new Worker('../src/worker/scalachessjs.js')
+export const workercallbacks = {}
 worker.addEventListener("message", (e)=>{        
     let id = e.data.payload.path || e.data.reqid    
     workercallbacks[id](e.data.payload)

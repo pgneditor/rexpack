@@ -1,8 +1,8 @@
 import React from 'react'
-import { BasicBoard, VARIANT_KEYS } from './BasicBoard.js'
+import { BasicBoard, VARIANT_KEYS, worker, workercallbacks } from './BasicBoard.js'
 import { Combo, SelectSaveLoad } from './Widgets.js'
 import { Game, WEIGHT_OPTIONS } from './Chess.js'
-import { LogItem, Logger } from './Utils.js'
+import { LogItem, Logger, UID } from './Utils.js'
 
 //import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
 //import 'react-tabs/style/react-tabs.css'
@@ -10,6 +10,37 @@ import '../piece/alpha.css'
 import { st } from './Style.js';
 
 const MATE_SCORE = 10000
+
+function convertmove(variant, fen, from, to){
+  return new Promise(function(resolve){
+    let id = UID()
+    workercallbacks[id] = (payload)=>{
+        delete workercallbacks[id]
+        resolve(payload)
+    }
+    worker.postMessage({
+        topic: 'move',                
+        payload: {
+            path: id,
+            fen: fen,
+            variant: variant,
+            orig: from,
+            dest: to
+        }
+    })
+  })
+}
+
+function convertsummary(variant, fen, summary, log){  
+  return summary.slice().reverse().map(async function(line){
+    let lineparts = line.split(" ")
+    let algeb = lineparts[1]
+    let from = algeb.substring(0,2)
+    let to = algeb.substring(2,4)
+    let payload = await convertmove(variant, fen, from, to)
+    log(new LogItem(lineparts[0] + "   " + payload.situation.san.padEnd(6, " ") + " " + lineparts[2]))
+  })
+}
 
 /*const Message = () => {
   return (
@@ -251,10 +282,8 @@ class App extends React.Component {
     if(stored){
       this.logsep()        
       let summary = JSON.parse(stored)
-      this.setState({lastanalysis: summary.join("\n")})
-      for(let line of summary.slice().reverse()){
-        this.enginelog.log(new LogItem(line))
-      }
+      convertsummary(this.getvariant(), gamenode.fen, summary, this.enginelog.log.bind(this.enginelog))      
+      this.setState({lastanalysis: summary.join("\n")})      
       if(!this.enginerunning) basicboard.highlightanalysis(summary)
     }  
     basicboard.reportpgn((payload)=>{
