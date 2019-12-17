@@ -354,6 +354,7 @@ export class BasicBoard extends React.Component {
             for(let child of childs){
                 this.drawmovearrow(weightscanvas, this.movefromalgeb(child.genalgeb), {
                     scalefactor: this.arrowscalefactor(),
+                    auxscalefactor: 1.2,
                     color: "#00f",
                     opacity: child.weights[0] / 10
                 })
@@ -365,16 +366,18 @@ export class BasicBoard extends React.Component {
         return Math.floor(Math.min(( Math.abs(score) / 1000.0 ) * 192.0 + 63.0, 255.0))
     }
 
-    highlightanalysis(summary){        
+    highlightanalysis(summary){                
         let analysiscanvas = this.getanalysiscanvas()
         analysiscanvas.clear()
-        for(let i in summary){
-            let line = summary[i]
+        let summaryrev = summary.slice().reverse()
+        for(let keyi in summary){
+            let i = parseInt(keyi)
+            let line = summaryrev[i]
             let lineparts = line.split(" ")
             //let depth = parseInt(lineparts[0])
             let move = this.movefromalgeb(lineparts[1])
             let scorenumerical = parseInt(lineparts[2])
-            let auxscalefactor = 1.0 / ( parseInt(i) + 1 )
+            let auxscalefactor = 1.0 / ( summary.length - i )
             this.drawmovearrow(analysiscanvas, move, {
                 scalefactor: this.arrowscalefactor(),
                 auxscalefactor: auxscalefactor,
